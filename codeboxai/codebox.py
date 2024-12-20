@@ -101,7 +101,7 @@ class FileStore:
         dest_path = request_dir / file_path.name
         shutil.copy2(file_path, dest_path)
 
-        return str(dest_path)
+        return str(dest_path.relative_to(self.base_path))
 
     def get_file_path(self, request_id: str, filename: str) -> Path:
         """Get path for a stored file"""
