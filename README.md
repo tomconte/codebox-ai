@@ -22,13 +22,6 @@ This enables you to create powerful AI assistants that can execute Python code, 
 - 📊 Support for data science libraries
 - 🛡️ Resource usage limits and security constraints
 
-## Prerequisites 
-
-- Python 3.9+
-- Docker
-- FastAPI
-- uvicorn
-
 ## Quick Start 🚀
 
 1. Clone the repository:
@@ -46,7 +39,7 @@ pip install -r requirements.txt
 
 3. Start the server:
 ```bash
-uvicorn main:app --reload
+uvicorn codeboxai.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`
@@ -111,11 +104,10 @@ curl -X POST http://localhost:8000/execute \
 - Resource usage limits (CPU, memory)
 - Automatic file cleanup
 - Input code validation
-- Network access restrictions
 
 ## Supported Packages 📦
 
-The following packages are allowed to be installed:
+The following packages are currently allowed to be installed:
 - numpy
 - pandas
 - matplotlib
@@ -139,18 +131,6 @@ The system consists of several key components:
 4. File storage system
 5. Execution queue manager
 
-## Local Development 🛠️
-
-1. Fork the repository
-2. Create a new branch for your feature
-3. Install development dependencies
-4. Make your changes
-5. Submit a pull request
-
-## Contributing 🤝
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## License 📄
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -158,10 +138,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Disclaimer ⚠️
 
 This is a prototype implementation and should not be used in production without additional security measures and thorough testing.
-
-## Acknowledgments 🙏
-
-- Inspired by OpenAI's Code Interpreter
-- Built with FastAPI and Docker
-- Python community and its amazing packages
-- OpenAI and Anthropic for their powerful LLM capabilities
