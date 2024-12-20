@@ -11,8 +11,6 @@ CodeBox-AI is designed to be used in conjunction with Large Language Models (LLM
 
 This enables you to create powerful AI assistants that can execute Python code, analyze data, create visualizations, and handle file operations in a secure environment.
 
-> 🔜 **Coming Soon**: Examples of integrating CodeBox-AI with OpenAI and Anthropic models.
-
 ## Features ✨
 
 - 🔒 Secure code execution in isolated Docker containers
@@ -43,6 +41,12 @@ uvicorn codeboxai.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`
+
+## LLM integration example 🤝
+
+### OpenAI
+
+- [examples/example_openai.py](examples/example_openai.py)
 
 ## API Usage 📚
 
