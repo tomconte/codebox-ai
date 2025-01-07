@@ -42,6 +42,20 @@ uvicorn codeboxai.main:app --reload
 
 The API will be available at `http://localhost:8000`
 
+### Docker "file not found" error
+
+If you encounter a "file not found" `DockerException` when running the server on MacOS, you might need to set the `DOCKER_HOST` environment variable. First, find out which context you are using by running:
+
+```bash
+docker context ls
+```
+
+Then set the `DOCKER_HOST` environment variable to the correct endpoint:
+
+```bash
+export DOCKER_HOST="unix:///Users/tconte/.docker/run/docker.sock"
+```
+
 ## LLM integration example 🤝
 
 ### OpenAI
