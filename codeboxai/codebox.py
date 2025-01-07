@@ -1,13 +1,17 @@
+import logging
 import os
-import uuid
-import docker
-from pathlib import Path
 import shutil
 import tempfile
+import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict
+from pathlib import Path
+from typing import Dict, List, Optional
 
+import docker
 from pydantic import BaseModel, Field, field_validator
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Safe packages that are allowed to be installed
 ALLOWED_PACKAGES = {
@@ -61,8 +65,8 @@ class ExecutionRequest(BaseModel):
         ]
         for keyword in forbidden_keywords:
             if keyword in code:
-                raise ValueError(f"Potentially dangerous code: {
-                                 keyword} not allowed")
+                logger.error(f"Potentially dangerous code: {keyword} not allowed")
+                raise ValueError(f"Potentially dangerous code: {keyword} not allowed")
         return code
 
     @field_validator('dependencies')
@@ -78,6 +82,9 @@ class ExecutionRequest(BaseModel):
         # Check against allowed packages
         invalid_packages = base_packages - ALLOWED_PACKAGES
         if invalid_packages:
+            logger.error(
+                f"Following packages are not allowed: {', '.join(invalid_packages)}."
+            )
             raise ValueError(
                 f"Following packages are not allowed: {
                     ', '.join(invalid_packages)}. "
@@ -94,6 +101,8 @@ class FileStore:
 
     def store_file(self, request_id: str, file_path: Path) -> str:
         """Store a file for a specific request"""
+        logger.info(f"Storing file {file_path.name} for request {request_id}")
+
         request_dir = self.base_path / request_id
         request_dir.mkdir(parents=True, exist_ok=True)
 
@@ -205,6 +214,7 @@ class CodeBoxService:
                 work_dir, request_data['dependencies'])
 
             # Build custom image
+            logger.info(f"Building Docker image for request {request_id}")
             image, build_logs = self.docker_client.images.build(
                 path=work_dir,
                 dockerfile=dockerfile_path,
@@ -215,6 +225,7 @@ class CodeBoxService:
             self.storage.requests[request_id]['status'] = 'running'
 
             # Run container with custom image
+            logger.info(f"Running Docker container for request {request_id}")
             container = self.docker_client.containers.run(
                 image.id,
                 volumes={
@@ -262,6 +273,7 @@ class CodeBoxService:
             self.storage.results[request_id]['files'] = generated_files
 
         except Exception as e:
+            logger.exception(f"Error executing request {request_id}: {e}")
             self.storage.results[request_id] = {
                 'status': 'error',
                 'error_message': str(e),

@@ -1,8 +1,34 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+import logging.config
+
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi_utils.tasks import repeat_every
 
 from codeboxai.codebox import CodeBoxService, ExecutionRequest, Storage
+
+# Define the logging config
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "()": "uvicorn.logging.DefaultFormatter",
+            "fmt": "%(levelprefix)s %(message)s",
+        },
+    },
+    "handlers": {
+        "default": {
+            "formatter": "default",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",
+        },
+    },
+    "loggers": {
+        "": {"handlers": ["default"], "level": "INFO"},  # Root logger
+        "uvicorn": {"handlers": ["default"], "level": "INFO"},
+    },
+}
+
 
 app = FastAPI(
     title="CodeBox-AI",
@@ -13,6 +39,11 @@ app = FastAPI(
 # Initialize the storage and code interpreter service
 storage = Storage()
 code_interpreter = CodeBoxService(storage)
+
+
+@app.on_event("startup")
+async def configure_logging():
+    logging.config.dictConfig(LOGGING_CONFIG)
 
 
 @app.post("/execute")
@@ -75,10 +106,23 @@ async def download_file(request_id: str, filename: str):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
 
+    # Determine the media type based on the file extension
+    media_type = 'application/octet-stream'
+    if filename.endswith('.py'):
+        media_type = 'text/x-python'
+    elif filename.endswith('.txt'):
+        media_type = 'text/plain'
+    elif filename.endswith('.json'):
+        media_type = 'application/json'
+    elif filename.endswith('.csv'):
+        media_type = 'text/csv'
+    elif filename.endswith('.png'):
+        media_type = 'image/png'
+
     return FileResponse(
         path=file_path,
         filename=filename,
-        media_type='application/octet-stream'
+        media_type=media_type
     )
 
 
