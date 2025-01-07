@@ -74,7 +74,9 @@ def chat_with_code_execution(user_message: str) -> None:
     messages = [
         {"role": "system", "content": """You are a helpful AI assistant with the ability to execute Python code. 
         When a user asks you to perform calculations, create visualizations, or analyze data, you can write 
-        and execute Python code to help them. Always explain your approach before executing code."""},
+        and execute Python code to help them. Always explain your approach before executing code. 
+        To execute the code, use the 'execute_python_code' function. 
+        If you need to install any Python packages, specify them in the 'dependencies' field."""},
         {"role": "user", "content": user_message}
     ]
 
