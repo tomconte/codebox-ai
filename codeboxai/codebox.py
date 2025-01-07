@@ -25,6 +25,7 @@ ALLOWED_PACKAGES = {
     'pillow',
     'nltk',
     'opencv-python',
+    'scipy',
     'tensorflow',
     'torch',
     'transformers',
