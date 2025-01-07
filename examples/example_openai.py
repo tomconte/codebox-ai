@@ -107,17 +107,21 @@ def chat_with_code_execution(user_message: str) -> None:
                     print("```\n")
 
                     # Execute the code
-                    result = execute_code(
-                        function_args["code"],
-                        function_args.get("dependencies", [])
-                    )
+                    try:
+                        result = execute_code(
+                            function_args["code"],
+                            function_args.get("dependencies", [])
+                        )
+                    except Exception as exc:
+                        print("❌ Error executing code:", exc)
+                        result = {"error": str(exc)}
 
                     # Print execution results
-                    if result["stdout"]:
+                    if result.get("stdout"):
                         print("Output:")
                         print(result["stdout"])
 
-                    if result["stderr"]:
+                    if result.get("stderr"):
                         print("Errors:")
                         print(result["stderr"])
 
