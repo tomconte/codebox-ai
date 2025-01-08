@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Safe packages that are allowed to be installed
 ALLOWED_PACKAGES = {
+    'indsl',
     'numpy',
     'pandas',
     'matplotlib',
@@ -25,7 +26,9 @@ ALLOWED_PACKAGES = {
     'pillow',
     'nltk',
     'opencv-python',
+    'prophet',
     'scipy',
+    'stumpy',
     'tensorflow',
     'torch',
     'transformers',
@@ -148,7 +151,7 @@ class CodeBoxService:
         """Create a Dockerfile with the specified dependencies"""
         dockerfile_content = [
             "FROM python:3.9-slim",
-            "WORKDIR /workspace",
+            "WORKDIR /mnt/data",
 
             # Install system dependencies if needed
             "RUN apt-get update && apt-get install -y --no-install-recommends \\\n",
@@ -230,9 +233,9 @@ class CodeBoxService:
             container = self.docker_client.containers.run(
                 image.id,
                 volumes={
-                    work_dir: {'bind': '/workspace', 'mode': 'rw'}
+                    work_dir: {'bind': '/mnt/data', 'mode': 'rw'}
                 },
-                working_dir='/workspace',
+                working_dir='/mnt/data',
                 mem_limit=request_data['options']['memory_limit'],
                 cpu_period=100000,
                 cpu_quota=int(
