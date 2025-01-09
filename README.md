@@ -62,6 +62,27 @@ export DOCKER_HOST="unix:///Users/tconte/.docker/run/docker.sock"
 
 - [examples/example_openai.py](examples/example_openai.py)
 
+This example uses Azure OpenAI. To use it, create a `.env` file in the root directory with the following content:
+
+```bash
+AZURE_OPENAI_ENDPOINT=https://xxx.cognitiveservices.azure.com/
+AZURE_OPENAI_API_KEY=foo
+AZURE_OPENAI_DEPLOYMENT=gpt-4o
+OPENAI_API_VERSION=2024-05-01-preview
+```
+
+Make sure to change the values to your own Azure OpenAI credentials and deployment.
+
+Then run the example:
+
+```bash
+python examples/example_openai.py
+```
+
+### Anthropic
+
+- Coming soon!
+
 ## API Usage 📚
 
 ### Execute Code
@@ -122,32 +143,6 @@ curl -X POST http://localhost:8000/execute \
 - Resource usage limits (CPU, memory)
 - Automatic file cleanup
 - Input code validation
-
-## Supported Packages 📦
-
-The following packages are currently allowed to be installed:
-- numpy
-- pandas
-- matplotlib
-- seaborn
-- scikit-learn
-- requests
-- beautifulsoup4
-- pillow
-- nltk
-- opencv-python
-- tensorflow
-- torch
-- transformers
-
-## Architecture 🏗️
-
-The system consists of several key components:
-1. FastAPI web service
-2. Docker container manager
-3. Package dependency handler
-4. File storage system
-5. Execution queue manager
 
 ## License 📄
 
