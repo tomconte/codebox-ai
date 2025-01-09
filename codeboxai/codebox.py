@@ -150,14 +150,8 @@ class CodeBoxService:
     def _create_dockerfile(self, work_dir: str, dependencies: List[str]) -> str:
         """Create a Dockerfile with the specified dependencies"""
         dockerfile_content = [
-            "FROM python:3.9-slim",
+            "FROM codeboxai-base:latest",
             "WORKDIR /mnt/data",
-
-            # Install system dependencies if needed
-            "RUN apt-get update && apt-get install -y --no-install-recommends \\\n",
-            "    gcc \\\n",
-            "    python3-dev \\\n",
-            "    && rm -rf /var/lib/apt/lists/*",
 
             # Install Python dependencies
             "COPY requirements.txt .",
@@ -203,6 +197,9 @@ class CodeBoxService:
         work_dir = os.path.join(self.base_temp_dir, request_id)
         os.makedirs(work_dir, exist_ok=True)
         container = None
+
+        # Log request parameters
+        logger.info(f"Executing request {request_id}: dependencies={request_data['dependencies']} options={request_data['options']} work_dir={work_dir}")
 
         try:
             # Create Python script

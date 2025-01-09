@@ -35,7 +35,12 @@ source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Start the server:
+3. Create the base Docker image:
+```bash
+docker build -t codeboxai-base -f Dockerfile.base_image .
+```
+
+4. Start the server:
 ```bash
 uvicorn codeboxai.main:app --reload
 ```

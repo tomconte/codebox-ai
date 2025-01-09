@@ -1,0 +1,21 @@
+FROM python:3.9-slim
+WORKDIR /mnt/data
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install -U pip
+
+# Install some base Python dependencies
+# TODO: pin versions?
+RUN pip install --no-cache-dir \
+    numpy \
+    pandas \
+    matplotlib \
+    seaborn \
+    scikit-learn \
+    scipy \
+    transformers
