@@ -1,21 +1,34 @@
 FROM python:3.9-slim
-WORKDIR /mnt/data
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install -U pip
 
 # Install some base Python dependencies
-# TODO: pin versions?
+# TODO: pin versions
 RUN pip install --no-cache-dir \
     numpy \
     pandas \
     matplotlib \
     seaborn \
     scikit-learn \
-    scipy \
-    transformers
+    scipy
+
+# Install required packages
+RUN pip install --no-cache-dir \
+    ipykernel \
+    jupyter_client
+
+# Create a non-root user
+RUN useradd -m -u 1000 jupyter
+
+# Create necessary directories
+RUN mkdir -p /opt/kernel /opt/connection && \
+    chown -R jupyter:jupyter /opt/kernel /opt/connection
+
+# Switch to non-root user
+USER jupyter
+
+# Set working directory
+WORKDIR /opt/kernel
+
+# The command will be provided when running the container
+CMD ["python", "-m", "ipykernel_launcher", "-f", "/opt/connection/kernel.json"]

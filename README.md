@@ -1,26 +1,21 @@
-# CodeBox-AI 🤖
+# CodeBox-AI
 
-CodeBox-AI is a PROTOTYPE secure Python code execution service designed to replicate OpenAI's Code Interpreter capabilities. It provides a secure environment for executing arbitrary Python code with dependency management and file handling capabilities.
+A secure Python code execution service that provides a self-hosted alternative to OpenAI's Code Interpreter. Built with FastAPI and IPython kernels, it supports session-based code execution and integrates with LLM function calling.
 
-## Integration with LLMs 🧠
+## Features
 
-CodeBox-AI is designed to be used in conjunction with Large Language Models (LLMs) through their function calling capabilities. It can be seamlessly integrated with:
-- OpenAI GPT function calling
-- Anthropic Claude function calling
-- Other LLMs supporting structured function calls
+- Session-based Python code execution in Docker containers
+- IPython kernel for rich output support
+- Dynamic package installation
+- State persistence between executions
+- Support for plotting and visualization
 
-This enables you to create powerful AI assistants that can execute Python code, analyze data, create visualizations, and handle file operations in a secure environment.
+## Prerequisites 
 
-## Features ✨
+- Python 3.9+
+- Docker
 
-- 🔒 Secure code execution in isolated Docker containers
-- 📦 Dynamic Python package installation
-- 🗃️ File output handling and storage
-- 🔄 Asynchronous execution with status tracking
-- 📊 Support for data science libraries
-- 🛡️ Resource usage limits and security constraints
-
-## Quick Start 🚀
+## Installation
 
 1. Clone the repository:
 ```bash
@@ -35,14 +30,9 @@ source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Create the base Docker image:
+3. Start the server:
 ```bash
-docker build -t codeboxai-base -f Dockerfile.base_image .
-```
-
-4. Start the server:
-```bash
-uvicorn codeboxai.main:app --reload
+uvicorn main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`
@@ -61,98 +51,88 @@ Then set the `DOCKER_HOST` environment variable to the correct endpoint:
 export DOCKER_HOST="unix:///Users/tconte/.docker/run/docker.sock"
 ```
 
-## LLM integration example 🤝
+## Usage
 
-### OpenAI
+### Direct API Usage
 
-- [examples/example_openai.py](examples/example_openai.py)
-
-This example uses Azure OpenAI. To use it, create a `.env` file in the root directory with the following content:
-
+1. Create a new session:
 ```bash
+curl -X POST http://localhost:8000/sessions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dependencies": ["numpy", "pandas"]
+  }'
+```
+
+2. Execute code in the session:
+```bash
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "x = 42\nprint(f\"Value of x: {x}\")",
+    "session_id": "YOUR_SESSION_ID"
+  }'
+```
+
+3. Execute more code in the same session:
+```bash
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "print(f\"x is still: {x}\")",
+    "session_id": "YOUR_SESSION_ID"
+  }'
+```
+
+### OpenAI GPT Integration Example
+
+An example script is provided to demonstrate integration with OpenAI's GPT models.
+
+1. Create a `.env` file in the project root:
+```
 AZURE_OPENAI_ENDPOINT=https://xxx.cognitiveservices.azure.com/
 AZURE_OPENAI_API_KEY=foo
 AZURE_OPENAI_DEPLOYMENT=gpt-4o
 OPENAI_API_VERSION=2024-05-01-preview
 ```
 
-Make sure to change the values to your own Azure OpenAI credentials and deployment.
-
-Then run the example:
-
+2. Install additional requirements:
 ```bash
-python examples/example_openai.py
+pip install openai python-dotenv
 ```
 
-### Anthropic
-
-- Coming soon!
-
-## API Usage 📚
-
-### Execute Code
+3. Run the example:
 ```bash
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "print(\"Hello from CodeBox-AI!\")",
-    "dependencies": ["numpy", "pandas"],
-    "execution_options": {
-      "timeout": 300,
-      "memory_limit": "2G"
-    }
-  }'
+python example_openai.py
 ```
 
-### Check Execution Status
-```bash
-curl http://localhost:8000/execute/{request_id}/status
-```
+This will start an interactive session where you can chat with GPT-4 and have it execute Python code. The script maintains state between executions, so variables and imports persist across interactions.
 
-### Get Results
-```bash
-curl http://localhost:8000/execute/{request_id}/results
-```
+## API Endpoints
 
-### Download Generated Files
-```bash
-curl http://localhost:8000/files/{request_id}/{filename}
-```
+- `POST /sessions` - Create a new session
+- `POST /execute` - Execute code in a session
+- `GET /execute/{request_id}/status` - Get execution status
+- `GET /execute/{request_id}/results` - Get execution results
+- `DELETE /sessions/{session_id}` - Cleanup a session
 
-## Data Science Example 📊
+## Security Notes
 
-Here's an example that generates a plot using matplotlib:
+- Code execution is containerized using Docker
+- Each session runs in an isolated environment
+- Basic resource limits are implemented
+- Network access is available but can be restricted
+- Input code validation is implemented for basic security
 
-```bash
-curl -X POST http://localhost:8000/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "
-      import numpy as np
-      import matplotlib.pyplot as plt
-      
-      x = np.linspace(0, 10, 100)
-      y = np.sin(x)
-      plt.plot(x, y)
-      plt.savefig(\"sine_wave.png\")
-      print(\"Plot saved!\")
-    ",
-    "dependencies": ["numpy", "matplotlib"]
-  }'
-```
+## License
 
-## Security Features 🛡️
+MIT License - See LICENSE file for details.
 
-- Containerized execution environment
-- Whitelisted Python packages
-- Resource usage limits (CPU, memory)
-- Automatic file cleanup
-- Input code validation
+## A Note on Authorship
 
-## License 📄
+This code was pair-programmed with Claude 3.5 Sonnet (yes, an AI helping to build tools for other AIs - very meta). While I handled the product decisions and architecture reviews, Claude did most of the heavy lifting in terms of code generation and documentation. Even this README was written by Claude, which makes this acknowledgment a bit like an AI writing about an AI writing about AI tools... we need to go deeper 🤖✨
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Humans were (mostly) present during the development process. No AIs were harmed in the making of this project, though a few might have gotten slightly dizzy from the recursion.
 
-## Disclaimer ⚠️
-
-This is a prototype implementation and should not be used in production without additional security measures and thorough testing.
+---
+A prototype implementation, not intended for production use without additional security measures.

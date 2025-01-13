@@ -1,53 +1,76 @@
+import base64
 import json
+import os
 import time
-import requests
-from typing import List, Dict, Any
-from openai import AzureOpenAI
+from typing import Any, Dict, List, Optional
 
 import dotenv
+import requests
+from kitty import kitty_display_image_file
+from openai import AzureOpenAI
+
 dotenv.load_dotenv()
 
 # Initialize OpenAI client
-client = AzureOpenAI()  # Make sure OPENAI_API_KEY is set in your environment
+client = AzureOpenAI()
 
 # CodeBox-AI API configuration
 CODEBOX_URL = "http://localhost:8000"
 
 
-def execute_code(code: str, dependencies: List[str] = None) -> Dict[str, Any]:
-    """Execute code using CodeBox-AI and return results"""
-    url = f"{CODEBOX_URL}/execute"
-    payload = {
-        "code": code,
-        "dependencies": dependencies or []
-    }
+class CodeBoxSession:
+    """Manages a CodeBox-AI session"""
 
-    # Start execution
-    response = requests.post(url, json=payload)
-    response.raise_for_status()
-    request_id = response.json()["request_id"]
+    def __init__(self, dependencies: Optional[List[str]] = None):
+        self.session_id = self._create_session(dependencies)
 
-    # Poll for results
-    while True:
-        status_response = requests.get(
-            f"{CODEBOX_URL}/execute/{request_id}/status")
-        status = status_response.json()
+    def _create_session(self, dependencies: Optional[List[str]] = None) -> str:
+        """Create a new CodeBox session"""
+        response = requests.post(
+            f"{CODEBOX_URL}/sessions",
+            json={"dependencies": dependencies or []}
+        )
+        response.raise_for_status()
+        return response.json()["session_id"]
 
-        if status["status"] in ["completed", "failed", "error"]:
-            break
+    def execute_code(self, code: str) -> Dict[str, Any]:
+        """Execute code in the session"""
+        # Submit code execution request
+        execution_response = requests.post(
+            f"{CODEBOX_URL}/execute",
+            json={
+                "code": code,
+                "session_id": self.session_id
+            }
+        )
+        execution_response.raise_for_status()
+        request_id = execution_response.json()["request_id"]
 
-        time.sleep(1)
+        # Poll for results
+        while True:
+            status_response = requests.get(
+                f"{CODEBOX_URL}/execute/{request_id}/status")
+            status = status_response.json()
 
-    # Get final results
-    results = requests.get(f"{CODEBOX_URL}/execute/{request_id}/results")
-    return results.json()
+            if status["status"] in ["completed", "failed", "error"]:
+                break
+
+            time.sleep(1)
+
+        # Get final results
+        results = requests.get(f"{CODEBOX_URL}/execute/{request_id}/results")
+        return results.json()
+
+    def cleanup(self):
+        """Cleanup the session"""
+        requests.delete(f"{CODEBOX_URL}/sessions/{self.session_id}")
 
 
 # Define available functions for OpenAI
 functions = [
     {
         "name": "execute_python_code",
-        "description": "Execute Python code in a secure environment with optional dependencies",
+        "description": "Execute Python code in a secure environment with state persistence",
         "parameters": {
             "type": "object",
             "properties": {
@@ -69,118 +92,157 @@ functions = [
 ]
 
 
-def chat_with_code_execution(user_message: str) -> None:
+def chat_with_code_execution(user_message: str, messages: List[Dict], session: Optional[CodeBoxSession] = None) -> None:
     """Chat with GPT-4 with code execution capabilities"""
-    messages = [
-        {"role": "system", "content": """You are a helpful AI assistant with the ability to execute Python code. 
-        When a user asks you to perform calculations, create visualizations, or analyze data, you can write 
-        and execute Python code to help them. Always explain your approach before executing code. 
-        To execute the code, use the 'execute_python_code' function. 
-        If you need to install any Python packages, specify them in the 'dependencies' field."""},
-        {"role": "user", "content": user_message}
-    ]
+    # Create session if not provided
+    own_session = False
+    if session is None:
+        session = CodeBoxSession(
+            dependencies=["numpy", "pandas", "matplotlib"])
+        own_session = True
 
-    while True:
-        # Get completion from OpenAI
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            tools=[{"type": "function", "function": f} for f in functions],
-            tool_choice="auto"
+    try:
+        messages.append(
+            {"role": "user", "content": user_message}
         )
 
-        message = response.choices[0].message
-        messages.append({"role": "assistant", "content": message.content})
+        while True:
+            # Get completion from OpenAI
+            response = client.chat.completions.create(
+                model=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+                messages=messages,
+                tools=[{"type": "function", "function": f} for f in functions],
+                tool_choice="auto"
+            )
 
-        # Check if the model wants to call a function
-        if message.tool_calls:
-            for tool_call in message.tool_calls:
-                if tool_call.function.name == "execute_python_code":
-                    # Parse the function arguments
-                    try:
-                        function_args = json.loads(tool_call.function.arguments)
-                    except json.JSONDecodeError:
-                        print("❌ Error: Invalid function arguments:", tool_call.function.arguments)
-                        break
+            message = response.choices[0].message
 
-                    print("\n🤖 Assistant is executing code:")
-                    print("```python")
-                    print(function_args["code"])
-                    print("```\n")
+            # If there's a content message, add it to the conversation
+            if message.content:
+                messages.append(
+                    {"role": "assistant", "content": message.content})
+                print("\n🤖 Assistant:", message.content)
 
-                    # Execute the code
-                    try:
-                        result = execute_code(
-                            function_args["code"],
-                            function_args.get("dependencies", [])
-                        )
-                    except Exception as exc:
-                        print("❌ Error executing code:", exc)
-                        result = {"error": str(exc)}
+            # Check if the model wants to call a function
+            if message.tool_calls:
+                # Add the assistant's message with tool calls
+                messages.append({
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": tool_call.id,
+                            "type": "function",
+                            "function": {
+                                "name": tool_call.function.name,
+                                "arguments": tool_call.function.arguments
+                            }
+                        } for tool_call in message.tool_calls
+                    ]
+                })
 
-                    # Print execution results
-                    if result.get("stdout"):
-                        print("Output:")
-                        print(result["stdout"])
+                # Process each tool call
+                for tool_call in message.tool_calls:
+                    if tool_call.function.name == "execute_python_code":
+                        # Parse the function arguments
+                        function_args = json.loads(
+                            tool_call.function.arguments)
 
-                    if result.get("stderr"):
-                        print("Errors:")
-                        print(result["stderr"])
+                        print("\n🤖 Assistant is executing code:")
+                        print("```python")
+                        print(function_args["code"])
+                        print("```\n")
 
-                    if result.get("files"):
-                        print("\nGenerated files:", result["files"])
+                        # Execute the code
+                        result = session.execute_code(function_args["code"])
 
-                    # If any files were generated, download them using the API
-                    for file in result.get("files", []):
-                        response = requests.get(f"{CODEBOX_URL}/files/{file['path']}")
-                        print(f"Downloaded file '{file['filename']}' length: {len(response.content)}")
+                        # Print execution results
+                        if result.get("output"):
+                            print("Output:")
+                            for output in result["output"]:
+                                if output["type"] == "stream":
+                                    print(output["content"].strip())
+                                elif output["type"] == "result":
+                                    print(output["content"])
 
-                    # Rewrite the files in the result with full URLs
-                    result["files"] = [f"{CODEBOX_URL}/files/{file['path']}" for file in result.get("files", [])]
+                        if result.get("error"):
+                            print("Errors:")
+                            print(result["error"])
 
-                    # Add the tool_calls to the messages
-                    messages.append({"role": "assistant", "tool_calls": [tool_call]})
+                        if result.get("files"):
+                            print(f"\nNumber of files: {len(result['files'])}")
+                            # Save each file in the result to a temporary .png file
+                            for i, file_data in enumerate(result["files"], 1):
+                                file_path = f"output_{i}.png"
+                                with open(file_path, "wb") as f:
+                                    # file_data is a base64 str
+                                    f.write(base64.b64decode(file_data))
+                                print(f"File saved: {file_path}")
+                                # Display the image using Kitty terminal
+                                kitty_display_image_file(file_path)
 
-                    # Add the function result to messages
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "name": tool_call.function.name,
-                        "content": json.dumps(result)
-                    })
+                            # Remove files from the result to avoid sending back to the model
+                            result["files"] = []
 
-            # Get another completion with the function results
-            continue
+                        # Add the tool response to messages
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "name": tool_call.function.name,
+                            "content": json.dumps(result)
+                        })
 
-        # No more function calls, print the final response
-        print("\n🤖 Assistant:", message.content)
-        break
+                # Continue the conversation to handle the tool results
+                continue
+
+            # No more function calls, we're done
+            break
+
+    finally:
+        # Cleanup session if we created it
+        if own_session:
+            session.cleanup()
 
 
 # Example usage
 if __name__ == "__main__":
-    examples = [
-        "Create a simple bar plot showing the populations of 5 major cities, and save it to a PNG file",
-        "Calculate the fibonacci sequence up to the 100th number and tell me some interesting properties about it",
-        "Create a scatter plot of random data and add a trend line. Save it to a PNG file.",
-        "Analyze this list of numbers and give me some statistics: 23, 45, 67, 89, 12, 34, 56, 78, 90, 21"
-    ]
+    # Create a session for multiple interactions
+    session = CodeBoxSession(dependencies=["numpy", "pandas", "matplotlib"])
 
-    print("🚀 CodeBox-AI OpenAI Integration Demo")
-    print("\nExample queries:")
-    for i, example in enumerate(examples, 1):
-        print(f"{i}. {example}")
-    print("\nEnter your query (or 'quit' to exit):")
+    try:
+        examples = [
+            "Create a variable x = 42",
+            "Print the value of x that we just created",
+            "Create a scatter plot of 100 random points and add a trend line",
+            "Calculate some statistics about the points we just plotted"
+        ]
 
-    while True:
-        user_input = input("\n> ")
-        if user_input.lower() in ['quit', 'exit']:
-            break
+        messages = [
+            {"role": "system", "content": """You are a helpful AI assistant with the ability to execute Python code. 
+            When a user asks you to perform calculations, create visualizations, or analyze data, you can write 
+            and execute Python code to help them. The code executes in a persistent session, so variables and 
+            imports are maintained between executions. Always explain your approach before executing code."""}
+        ]
 
-        try:
-            chat_with_code_execution(user_input)
-        except Exception as e:
-            print(f"❌ Error: {e}")
-            # Print stack trace for debugging
-            import traceback
-            traceback.print_exc()
+        print("🚀 CodeBox-AI OpenAI Integration Demo")
+        print("\nExample queries (maintaining state between executions):")
+        for i, example in enumerate(examples, 1):
+            print(f"{i}. {example}")
+        print("\nEnter your query (or 'quit' to exit):")
+
+        while True:
+            user_input = input("\n> ")
+            if user_input.lower() in ['quit', 'exit']:
+                break
+
+            try:
+                # Use the same session for all interactions
+                chat_with_code_execution(
+                    user_input, messages=messages, session=session)
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                raise
+
+    finally:
+        # Cleanup the session
+        session.cleanup()
