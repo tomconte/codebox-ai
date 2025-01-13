@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 3. Start the server:
 ```bash
-uvicorn main:app --reload
+uvicorn codeboxai.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`
@@ -98,12 +98,12 @@ OPENAI_API_VERSION=2024-05-01-preview
 
 2. Install additional requirements:
 ```bash
-pip install openai python-dotenv
+pip install -r examples/requirements.txt
 ```
 
 3. Run the example:
 ```bash
-python example_openai.py
+python examples/example_openai.py
 ```
 
 This will start an interactive session where you can chat with GPT-4 and have it execute Python code. The script maintains state between executions, so variables and imports persist across interactions.

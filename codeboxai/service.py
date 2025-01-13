@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-from kernel_manager import KernelManager
+from typing import Any, Dict, List, Optional
+
+from codeboxai.kernel_manager import KernelManager
 
 
 class CodeExecutionService:

@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from models import ExecutionRequest, ExecutionResponse, StatusResponse, SessionRequest, SessionResponse
-from service import CodeExecutionService
-from typing import Dict, Any
 import atexit
+from typing import Any, Dict
+
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+
+from codeboxai.models import (ExecutionRequest, ExecutionResponse,
+                              SessionRequest, SessionResponse, StatusResponse)
+from codeboxai.service import CodeExecutionService
 
 app = FastAPI(
     title="CodeBox-AI",
