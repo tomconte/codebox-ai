@@ -154,7 +154,14 @@ def chat_with_code_execution(user_message: str, messages: List[Dict], session: O
                         print("```\n")
 
                         # Execute the code
-                        result = session.execute_code(function_args["code"])
+                        try:
+                            result = session.execute_code(function_args["code"])
+                        except Exception as exc:
+                            result = {
+                                "output": [],
+                                "error": str(exc),
+                                "files": []
+                            }
 
                         # Print execution results
                         if result.get("output"):
