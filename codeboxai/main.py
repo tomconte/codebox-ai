@@ -1,4 +1,5 @@
 import atexit
+import logging
 from typing import Any, Dict
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -7,13 +8,15 @@ from codeboxai.models import (ExecutionRequest, ExecutionResponse,
                               SessionRequest, SessionResponse, StatusResponse)
 from codeboxai.service import CodeExecutionService
 
+logger = logging.getLogger(__name__)
+
+code_service = None
+
 app = FastAPI(
     title="CodeBox-AI",
     description="Secure Python code execution service with IPython kernel",
     version="0.1.0"
 )
-
-code_service = CodeExecutionService()
 
 
 @app.post("/sessions")
@@ -89,6 +92,24 @@ async def cleanup_session(session_id: str):
         code_service.cleanup_session(session_id)
         return {"status": "cleaned up"}
     raise HTTPException(status_code=404, detail="Session not found")
+
+
+# Configure logging on startup
+@app.on_event("startup")
+async def configure_logging():
+    # Configure logging
+    formatter = logging.Formatter('%(levelname)s:     %(asctime)s %(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
+
+    # Initialize code execution service
+    global code_service
+    code_service = CodeExecutionService()
+
+    logger.info("CodeBox-AI service started")
 
 
 # Cleanup on shutdown

@@ -1,8 +1,11 @@
+import logging
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from codeboxai.kernel_manager import KernelManager
+
+logger = logging.getLogger(__name__)
 
 
 class CodeExecutionService:
@@ -35,11 +38,13 @@ class CodeExecutionService:
                 'dependencies': dependencies or []
             }
 
+            logger.info(f"Created session {session_id}")
+
             return session_id
 
         except Exception as exc:
             # Cleanup if session creation fails
-            print(f"Error creating session: {exc}")
+            logger.error(f"Error creating session: {exc}")
             if session_id in self.sessions:
                 del self.sessions[session_id]
             self.kernel_manager.stop_kernel(session_id)
@@ -65,6 +70,8 @@ class CodeExecutionService:
             'created_at': datetime.utcnow().isoformat()
         }
 
+        logger.info(f"Created execution request {request_id} in session {session_id}")
+
         return request_id
 
     async def execute_code(self, request_id: str):
@@ -76,6 +83,8 @@ class CodeExecutionService:
 
         try:
             self.requests[request_id]['status'] = 'running'
+
+            logger.info(f"Executing code for request {request_id}")
 
             result = self.kernel_manager.execute_code(
                 session_id,  # Use session_id for kernel identification
@@ -113,7 +122,10 @@ class CodeExecutionService:
                 'completed_at': datetime.utcnow().isoformat()
             }
 
+            logger.info(f"Code execution for request {request_id} completed with status: {result['status']}")
+
         except Exception as e:
+            logger.error(f"Error executing code for request {request_id}: {e}")
             self.results[request_id] = {
                 'status': 'error',
                 'error': str(e),

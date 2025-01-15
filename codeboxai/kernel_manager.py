@@ -25,8 +25,8 @@ class KernelManager:
             self.docker_client.images.get(self.image_name)
         except docker.errors.ImageNotFound as exc:
             logger.info(f"Could not find image {self.image_name}: {exc}")
-            logger.info(f"Building kernel image {self.image_name}...")
-            dockerfile_dir = Path(__file__).parent
+            dockerfile_dir = Path(__file__).parent.parent
+            logger.info(f"Building kernel image {self.image_name} in {dockerfile_dir}...")
             self.docker_client.images.build(
                 path=str(dockerfile_dir),
                 dockerfile='Dockerfile.base_image',
@@ -129,18 +129,18 @@ class KernelManager:
             try:
                 kernel_info['client'].stop_channels()
             except Exception as e:
-                print(f"Error stopping client channels: {e}")
+                logger.error(f"Error stopping client channels: {e}")
 
             try:
                 kernel_info['container'].stop(timeout=5)
             except Exception as e:
-                print(f"Error stopping container: {e}")
+                logger.error(f"Error stopping container: {e}")
 
             for file_key in ['connection_file', 'client_file']:
                 try:
                     kernel_info[file_key].unlink()
                 except Exception as e:
-                    print(f"Error removing {file_key}: {e}")
+                    logger.error(f"Error removing {file_key}: {e}")
 
             del self.kernels[kernel_id]
 
@@ -218,4 +218,4 @@ class KernelManager:
         try:
             self.connection_dir.rmdir()
         except Exception as e:
-            print(f"Error removing connection directory: {e}")
+            logger.error(f"Error removing connection directory: {e}")
