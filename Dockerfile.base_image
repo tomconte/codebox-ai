@@ -1,6 +1,28 @@
 FROM python:3.9-slim
 
-RUN pip install -U pip
+# Install required packages
+RUN pip install --no-cache-dir \
+    ipykernel \
+    jupyter_client
+
+# Create a non-root user
+RUN useradd -m -u 1000 jupyter
+
+# Create virtual environment and necessary directories
+ENV VIRTUAL_ENV=/home/jupyter/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Create working directories
+RUN mkdir -p /opt/kernel /opt/connection && \
+    chown -R jupyter:jupyter /opt/kernel /opt/connection /home/jupyter
+
+# Switch to non-root user
+USER jupyter
+WORKDIR /opt/kernel
+
+# Install ipykernel in the virtual environment
+RUN pip install --no-cache-dir ipykernel jupyter_client
 
 # Install some base Python dependencies
 # TODO: pin versions
@@ -11,24 +33,6 @@ RUN pip install --no-cache-dir \
     seaborn \
     scikit-learn \
     scipy
-
-# Install required packages
-RUN pip install --no-cache-dir \
-    ipykernel \
-    jupyter_client
-
-# Create a non-root user
-RUN useradd -m -u 1000 jupyter
-
-# Create necessary directories
-RUN mkdir -p /opt/kernel /opt/connection && \
-    chown -R jupyter:jupyter /opt/kernel /opt/connection
-
-# Switch to non-root user
-USER jupyter
-
-# Set working directory
-WORKDIR /opt/kernel
 
 # The command will be provided when running the container
 CMD ["python", "-m", "ipykernel_launcher", "-f", "/opt/connection/kernel.json"]
