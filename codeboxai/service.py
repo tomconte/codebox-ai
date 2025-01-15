@@ -25,10 +25,12 @@ class CodeExecutionService:
 
             # Install dependencies if any
             if dependencies:
+                logger.info(f"Installing dependencies for session {session_id}: {dependencies}")
                 deps_code = f"!pip install {' '.join(dependencies)}"
                 deps_result = self.kernel_manager.execute_code(
                     session_id, deps_code)
                 if deps_result['status'] == 'error':
+                    logger.error(f"Failed to install dependencies: {deps_result['error']}")
                     raise ValueError(f"Failed to install dependencies: {
                                      deps_result['error']}")
 

@@ -40,7 +40,7 @@ async def create_execution(
 ):
     """Execute code in a session"""
     try:
-        request_id = await code_service.create_execution_request(request.dict())
+        request_id = await code_service.create_execution_request(request.model_dump())
         background_tasks.add_task(code_service.execute_code, request_id)
 
         return ExecutionResponse(
@@ -97,12 +97,11 @@ async def cleanup_session(session_id: str):
 # Configure logging on startup
 @app.on_event("startup")
 async def configure_logging():
+    # Get uvicorn logger
+    uvicorn_logger = logging.getLogger("uvicorn")
     # Configure logging
-    formatter = logging.Formatter('%(levelname)s:     %(asctime)s %(message)s')
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
     root_logger = logging.getLogger()
-    root_logger.addHandler(handler)
+    root_logger.addHandler(uvicorn_logger.handlers[0])
     root_logger.setLevel(logging.INFO)
 
     # Initialize code execution service
