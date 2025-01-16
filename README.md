@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 3. Start the server:
 ```bash
-uvicorn codeboxai.main:app --reload
+python -m codeboxai.main
 ```
 
 The API will be available at `http://localhost:8000`
@@ -107,6 +107,8 @@ python examples/example_openai.py
 ```
 
 This will start an interactive session where you can chat with GPT-4 and have it execute Python code. The script maintains state between executions, so variables and imports persist across interactions.
+
+![Demo screencast](docs/images/readme_screencast.gif)
 
 ## API Endpoints
 
