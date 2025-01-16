@@ -21,6 +21,9 @@ RUN mkdir -p /opt/kernel /opt/connection && \
 USER jupyter
 WORKDIR /opt/kernel
 
+# Upgrade pip
+RUN pip install --upgrade pip
+
 # Install ipykernel in the virtual environment
 RUN pip install --no-cache-dir ipykernel jupyter_client
 
@@ -33,6 +36,9 @@ RUN pip install --no-cache-dir \
     seaborn \
     scikit-learn \
     scipy
+
+# Make further pip installs quiet
+ENV PIP_QUIET=1
 
 # The command will be provided when running the container
 CMD ["python", "-m", "ipykernel_launcher", "-f", "/opt/connection/kernel.json"]
