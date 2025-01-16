@@ -77,14 +77,9 @@ functions = [
                 "code": {
                     "type": "string",
                     "description": "The Python code to execute"
-                },
-                "dependencies": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "List of Python packages to install before execution"
                 }
             },
-            "required": ["code", "dependencies"],
+            "required": ["code"],
             "additionalProperties": False
         },
         "strict": True
