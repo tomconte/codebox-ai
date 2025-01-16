@@ -13,7 +13,14 @@ logger = logging.getLogger(__name__)
 
 class KernelManager:
     def __init__(self, image_name: str = "codeboxai-jupyter-base:latest"):
-        self.docker_client = docker.from_env()
+        logger.info("Initializing Docker client...")
+        try:
+            self.docker_client = docker.from_env()
+            logger.info(f"Docker client initialized. API version: {self.docker_client.api.version()}")
+        except Exception as e:
+            logger.error(f"Error initializing Docker client: {e}")
+            raise
+
         self.image_name = image_name
         self.kernels: Dict[str, Dict[str, Any]] = {}
         self.connection_dir = Path(
@@ -22,7 +29,16 @@ class KernelManager:
 
     def _ensure_kernel_image(self):
         try:
+            logger.info(f"Checking for image {self.image_name}...")
+            # Try listing all images first
+            all_images = self.docker_client.images.list()
+            logger.info(f"Found {len(all_images)} images")
+            for img in all_images:
+                logger.info(f"Available image tags: {img.tags}")
+
             self.docker_client.images.get(self.image_name)
+
+            logger.info(f"Found image {self.image_name}")
         except docker.errors.ImageNotFound as exc:
             logger.info(f"Could not find image {self.image_name}: {exc}")
             dockerfile_dir = Path(__file__).parent.parent
