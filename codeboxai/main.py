@@ -2,7 +2,9 @@ import atexit
 import logging
 from typing import Any, Dict
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from codeboxai.models import (ExecutionRequest, ExecutionResponse,
                               SessionRequest, SessionResponse, StatusResponse)
@@ -17,6 +19,19 @@ app = FastAPI(
     description="Secure Python code execution service with IPython kernel",
     version="0.1.0"
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Extract the custom message from the Pydantic error
+    error_message = str(exc.errors()[0].get('ctx', {}).get('error', str(exc)))
+    return JSONResponse(
+        status_code=400,  # Using 400 instead of 422 as it's more appropriate for validation
+        content={
+            "status": "error",
+            "message": error_message
+        }
+    )
 
 
 @app.post("/sessions")

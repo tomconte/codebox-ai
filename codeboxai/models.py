@@ -1,5 +1,8 @@
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field, field_validator
+
+from codeboxai.security.validators.code import CodeValidator
 
 
 class ExecutionOptions(BaseModel):
@@ -20,12 +23,10 @@ class ExecutionRequest(BaseModel):
     @field_validator('code')
     @classmethod
     def validate_code(cls, code: str) -> str:
-        forbidden_keywords = ['import os',
-                              'import sys', 'subprocess', '__import__']
-        for keyword in forbidden_keywords:
-            if keyword in code:
-                raise ValueError(f"Potentially dangerous code: {
-                                 keyword} not allowed")
+        validator = CodeValidator()
+        is_valid, message = validator.validate_code(code)
+        if not is_valid:
+            raise ValueError(message)
         return code
 
 

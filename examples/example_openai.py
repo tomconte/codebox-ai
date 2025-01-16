@@ -152,9 +152,11 @@ def chat_with_code_execution(user_message: str, messages: List[Dict], session: O
                         try:
                             result = session.execute_code(function_args["code"])
                         except Exception as exc:
+                            # Also get the body of the message for error details
+                            error_body = exc.response.json()
                             result = {
                                 "output": [],
-                                "error": str(exc),
+                                "error": f"{str(exc)}\n{error_body}",
                                 "files": []
                             }
 
