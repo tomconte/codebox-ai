@@ -6,9 +6,16 @@ A secure Python code execution service that provides a self-hosted alternative t
 
 - Session-based Python code execution in Docker containers
 - IPython kernel for rich output support
-- Dynamic package installation
+- Dynamic package installation with security controls
+  - Package allowlist/blocklist system
+  - Version control for security vulnerabilities
+  - Support for pip and conda installations
 - State persistence between executions
 - Support for plotting and visualization
+- Code security validation
+  - AST-based code analysis
+  - Protection against dangerous imports and operations
+  - Support for Jupyter magic commands and shell operations
 
 ## Prerequisites 
 
