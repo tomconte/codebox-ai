@@ -96,6 +96,9 @@ class KernelManager:
                 "python", "-m", "ipykernel_launcher",
                 "-f", "/opt/connection/kernel.json"
             ],
+            'environment': {
+                'PYTHONPATH': '/opt/kernel'
+            },
             'volumes': {
                 str(connection_file): {
                     'bind': '/opt/connection/kernel.json',
@@ -105,11 +108,25 @@ class KernelManager:
             'ports': port_bindings,
             'detach': True,
             'remove': True,
+
+            # Resource limits
             'mem_limit': "2g",
             'cpu_count': 2,
-            'environment': {
-                'PYTHONPATH': '/opt/kernel'
-            }
+            'pids_limit': 100,
+            'ulimits': [
+                {'name': 'nofile', 'soft': 1024, 'hard': 2048},
+                {'name': 'nproc', 'soft': 50, 'hard': 100}
+            ],
+            'storage_opt': {'size': '10G'},
+
+            # Security configurations
+            'security_opt': ['no-new-privileges:true'],
+            'cap_drop': ['ALL'],
+            'cap_add': ['NET_BIND_SERVICE'],  # Minimum required capability
+
+            # Network configurations
+            'network_mode': 'bridge',  # Consider 'none' if network access isn't needed
+            'dns': ['8.8.8.8', '8.8.4.4'],  # Use Google DNS
         }
 
         container = self.docker_client.containers.run(**container_config)
