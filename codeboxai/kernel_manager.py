@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 import uuid
 import docker
 import socket
@@ -107,16 +108,12 @@ class KernelManager:
             },
             'ports': port_bindings,
             'detach': True,
-            'remove': True,
+            'remove': False,
 
             # Resource limits
             'mem_limit': "2g",
             'cpu_count': 2,
             'pids_limit': 100,
-            'ulimits': [
-                {'name': 'nofile', 'soft': 1024, 'hard': 2048},
-                {'name': 'nproc', 'soft': 50, 'hard': 100}
-            ],
             'storage_opt': {'size': '10G'},
 
             # Security configurations
@@ -130,6 +127,23 @@ class KernelManager:
         }
 
         container = self.docker_client.containers.run(**container_config)
+
+        # Check the status of the container
+        container.reload()
+        for _ in range(3):
+            if container.status == 'running':
+                break
+            container.reload()
+            time.sleep(1)
+        else:
+            logger.error(f"Kernel container failed to start: {container.status}")
+            # Log last few lines of container logs for debugging
+            logs = container.logs().decode('utf-8').splitlines()
+            for line in logs[-10:]:
+                logger.error(f"Container log: {line}")
+            # Cleanup and raise error
+            container.remove()
+            raise RuntimeError(f"Kernel container failed to start: {container.status}")
 
         client_connection = connection_info.copy()
         client_connection['ip'] = '127.0.0.1'
@@ -168,6 +182,11 @@ class KernelManager:
                 kernel_info['container'].stop(timeout=5)
             except Exception as e:
                 logger.error(f"Error stopping container: {e}")
+
+            try:
+                kernel_info['container'].remove()
+            except Exception as e:
+                logger.error(f"Error removing container: {e}")
 
             for file_key in ['connection_file', 'client_file']:
                 try:
