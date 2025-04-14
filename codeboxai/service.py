@@ -27,17 +27,18 @@ class CodeExecutionService:
             if dependencies:
                 logger.info(f"Installing dependencies for session {session_id}: {dependencies}")
                 deps_code = f"!pip install {' '.join(dependencies)}"
-                deps_result = self.kernel_manager.execute_code(
-                    session_id, deps_code)
-                if deps_result['status'] == 'error':
+                deps_result = self.kernel_manager.execute_code(session_id, deps_code)
+                if deps_result["status"] == "error":
                     logger.error(f"Failed to install dependencies: {deps_result['error']}")
-                    raise ValueError(f"Failed to install dependencies: {
-                                     deps_result['error']}")
+                    raise ValueError(
+                        f"Failed to install dependencies: {
+                                     deps_result['error']}"
+                    )
 
             self.sessions[session_id] = {
-                'created_at': datetime.utcnow().isoformat(),
-                'last_used': datetime.utcnow().isoformat(),
-                'dependencies': dependencies or []
+                "created_at": datetime.utcnow().isoformat(),
+                "last_used": datetime.utcnow().isoformat(),
+                "dependencies": dependencies or [],
             }
 
             logger.info(f"Created session {session_id}")
@@ -54,22 +55,22 @@ class CodeExecutionService:
 
     async def create_execution_request(self, request_data: Dict[str, Any]) -> str:
         request_id = str(uuid.uuid4())
-        session_id = request_data.get('session_id')
+        session_id = request_data.get("session_id")
 
         # If no session_id provided, create a new session
         if not session_id:
-            session_id = await self.create_session(request_data.get('dependencies'))
+            session_id = await self.create_session(request_data.get("dependencies"))
 
         # Verify session exists
         if session_id not in self.sessions:
             raise ValueError(f"Session {session_id} not found")
 
         self.requests[request_id] = {
-            'id': request_id,
-            'session_id': session_id,
-            'status': 'initializing',
-            'code': request_data['code'],
-            'created_at': datetime.utcnow().isoformat()
+            "id": request_id,
+            "session_id": session_id,
+            "status": "initializing",
+            "code": request_data["code"],
+            "created_at": datetime.utcnow().isoformat(),
         }
 
         logger.info(f"Created execution request {request_id} in session {session_id}")
@@ -81,47 +82,39 @@ class CodeExecutionService:
         if not request_data:
             return
 
-        session_id = request_data['session_id']
+        session_id = request_data["session_id"]
 
         try:
-            self.requests[request_id]['status'] = 'running'
+            self.requests[request_id]["status"] = "running"
 
             logger.info(f"Executing code for request {request_id}")
 
             result = self.kernel_manager.execute_code(
-                session_id,  # Use session_id for kernel identification
-                request_data['code']
+                session_id, request_data["code"]  # Use session_id for kernel identification
             )
 
             # Update session last used timestamp
-            self.sessions[session_id]['last_used'] = datetime.utcnow(
-            ).isoformat()
+            self.sessions[session_id]["last_used"] = datetime.utcnow().isoformat()
 
             # Format outputs for API response
             formatted_outputs = []
             files = []
 
-            for output in result['outputs']:
-                if output['type'] == 'stream':
-                    formatted_outputs.append({
-                        'type': 'stream',
-                        'content': output['text']
-                    })
-                elif output['type'] in ['execute_result', 'display_data']:
-                    if 'image/png' in output['data']:
-                        files.append(output['data']['image/png'])
-                    if 'text/plain' in output['data']:
-                        formatted_outputs.append({
-                            'type': 'result',
-                            'content': output['data']['text/plain']
-                        })
+            for output in result["outputs"]:
+                if output["type"] == "stream":
+                    formatted_outputs.append({"type": "stream", "content": output["text"]})
+                elif output["type"] in ["execute_result", "display_data"]:
+                    if "image/png" in output["data"]:
+                        files.append(output["data"]["image/png"])
+                    if "text/plain" in output["data"]:
+                        formatted_outputs.append({"type": "result", "content": output["data"]["text/plain"]})
 
             self.results[request_id] = {
-                'status': result['status'],
-                'output': formatted_outputs,
-                'error': result['error'],
-                'files': files,
-                'completed_at': datetime.utcnow().isoformat()
+                "status": result["status"],
+                "output": formatted_outputs,
+                "error": result["error"],
+                "files": files,
+                "completed_at": datetime.utcnow().isoformat(),
             }
 
             logger.info(f"Code execution for request {request_id} completed with status: {result['status']}")
@@ -129,9 +122,9 @@ class CodeExecutionService:
         except Exception as e:
             logger.error(f"Error executing code for request {request_id}: {e}")
             self.results[request_id] = {
-                'status': 'error',
-                'error': str(e),
-                'completed_at': datetime.utcnow().isoformat()
+                "status": "error",
+                "error": str(e),
+                "completed_at": datetime.utcnow().isoformat(),
             }
 
     def cleanup_session(self, session_id: str):

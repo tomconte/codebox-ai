@@ -9,63 +9,56 @@ logger = logging.getLogger(__name__)
 
 blocked_packages = {
     # Security Sensitive
-    'crypto',         # Cryptographic operations
-    'pycrypto',      # Cryptographic operations
-    'cryptography',   # Cryptographic operations
-    'paramiko',       # SSH protocol
-    'fabric',         # SSH automation
-    'ansible',        # System automation
-    'salt',          # System automation
-    'puppet',        # System automation
-
+    "crypto",  # Cryptographic operations
+    "pycrypto",  # Cryptographic operations
+    "cryptography",  # Cryptographic operations
+    "paramiko",  # SSH protocol
+    "fabric",  # SSH automation
+    "ansible",  # System automation
+    "salt",  # System automation
+    "puppet",  # System automation
     # System Access
-    'psutil',        # System and process utilities
-    'pywin32',       # Windows system access
-    'winreg',        # Windows registry access
-    'win32com',      # Windows COM interface
-    'win32api',      # Windows API access
-
+    "psutil",  # System and process utilities
+    "pywin32",  # Windows system access
+    "winreg",  # Windows registry access
+    "win32com",  # Windows COM interface
+    "win32api",  # Windows API access
     # Code Execution & Compilation
-    'pyinstaller',   # Creates executables
-    'py2exe',        # Creates executables
-    'cx_Freeze',     # Creates executables
-    'distutils',     # Package distribution
-    'pycdlib',       # ISO image manipulation
-
+    "pyinstaller",  # Creates executables
+    "py2exe",  # Creates executables
+    "cx_Freeze",  # Creates executables
+    "distutils",  # Package distribution
+    "pycdlib",  # ISO image manipulation
     # Network & Server
-    'django',        # Web framework
-    'flask',         # Web framework
-    'fastapi',       # Web framework
-    'tornado',       # Web framework
-    'twisted',       # Network framework
-    'socketserver',  # Network servers
-    'ftplib',        # FTP protocol
-    'smtplib',       # Email sending
-
+    "django",  # Web framework
+    "flask",  # Web framework
+    "fastapi",  # Web framework
+    "tornado",  # Web framework
+    "twisted",  # Network framework
+    "socketserver",  # Network servers
+    "ftplib",  # FTP protocol
+    "smtplib",  # Email sending
     # System Shell & Commands
-    'sh',            # Shell commands
-    'shellingham',   # Shell detection
-    'pexpect',       # Process control
-    'pyshell',       # Shell interface
-
+    "sh",  # Shell commands
+    "shellingham",  # Shell detection
+    "pexpect",  # Process control
+    "pyshell",  # Shell interface
     # Low-level System Access
-    'ctypes',        # C-compatible data types
-    'cffi',          # Foreign function interface
-    'mmap',          # Memory mapping
-
+    "ctypes",  # C-compatible data types
+    "cffi",  # Foreign function interface
+    "mmap",  # Memory mapping
     # Remote Code & Debuggers
-    'code',          # Code module
-    'pdb',           # Python debugger
-    'rpdb',          # Remote debugger
-    'ipdb',          # IPython debugger
-    'pyrasite',      # Process injection
-
+    "code",  # Code module
+    "pdb",  # Python debugger
+    "rpdb",  # Remote debugger
+    "ipdb",  # IPython debugger
+    "pyrasite",  # Process injection
     # Other Potentially Dangerous
-    'docker',        # Docker control
-    'kubernetes',    # Kubernetes control
-    'boto3',         # AWS SDK
-    'azure',         # Azure SDK
-    'google-cloud',  # GCP SDK
+    "docker",  # Docker control
+    "kubernetes",  # Kubernetes control
+    "boto3",  # AWS SDK
+    "azure",  # Azure SDK
+    "google-cloud",  # GCP SDK
 }
 
 
@@ -86,6 +79,7 @@ class PackageValidationRule(ValidationRule):
 
 def ast_rule(f: Callable) -> Callable:
     """Decorator to handle AST parsing for rules that need it"""
+
     @wraps(f)
     def wrapper(self, code: str) -> Tuple[bool, Optional[str]]:
         try:
@@ -93,6 +87,7 @@ def ast_rule(f: Callable) -> Callable:
             return f(self, tree)
         except SyntaxError as e:
             return False, f"Invalid Python syntax: {str(e)}"
+
     return wrapper
 
 
@@ -102,29 +97,47 @@ class CodeValidator:
     def __init__(self):
         # Initialize base security rules
         self.forbidden_builtins: Set[str] = {
-            'eval', 'exec', 'globals', 'locals', 'compile',
-            '__import__',
+            "eval",
+            "exec",
+            "globals",
+            "locals",
+            "compile",
+            "__import__",
         }
 
         self.forbidden_modules: Set[str] = {
-            'sys', 'subprocess', 'multiprocessing', 'socket',
-            'pickle', 'marshal', 'shelve', 'pty', 'pdb'
+            "sys",
+            "subprocess",
+            "multiprocessing",
+            "socket",
+            "pickle",
+            "marshal",
+            "shelve",
+            "pty",
+            "pdb",
         }
 
         self.forbidden_patterns: List[Pattern] = [
-            re.compile(r'(?<![\!%])__\w+__'),
+            re.compile(r"(?<![\!%])__\w+__"),
         ]
 
         self.jupyter_patterns: List[Pattern] = [
-            re.compile(r'^\s*!.*$', re.MULTILINE),  # Shell commands
-            re.compile(r'^\s*%.*$', re.MULTILINE),  # Line magic
-            re.compile(r'^\s*%%.*$', re.MULTILINE),  # Cell magic
+            re.compile(r"^\s*!.*$", re.MULTILINE),  # Shell commands
+            re.compile(r"^\s*%.*$", re.MULTILINE),  # Line magic
+            re.compile(r"^\s*%%.*$", re.MULTILINE),  # Cell magic
         ]
 
         self.allowed_shell_commands: Set[str] = {
-            'pip', 'conda', 'jupyter', 'python',
-            'pytest', 'black', 'flake8', 'mypy',
-            'curl', 'wget',
+            "pip",
+            "conda",
+            "jupyter",
+            "python",
+            "pytest",
+            "black",
+            "flake8",
+            "mypy",
+            "curl",
+            "wget",
         }
 
         # Initialize validation rules
@@ -136,23 +149,23 @@ class CodeValidator:
             ValidationRule(
                 name="jupyter_commands",
                 description="Validate Jupyter magic and shell commands",
-                validation_fn=self._validate_jupyter_commands
+                validation_fn=self._validate_jupyter_commands,
             ),
             ValidationRule(
                 name="dangerous_builtins",
                 description="Prevent use of dangerous built-in functions",
-                validation_fn=self._validate_builtins
+                validation_fn=self._validate_builtins,
             ),
             ValidationRule(
                 name="dangerous_imports",
                 description="Prevent importing of dangerous modules",
-                validation_fn=self._validate_imports
+                validation_fn=self._validate_imports,
             ),
             ValidationRule(
                 name="dangerous_patterns",
                 description="Prevent dangerous code patterns",
-                validation_fn=self._validate_patterns
-            )
+                validation_fn=self._validate_patterns,
+            ),
         ]
 
         # Add package validation rule
@@ -165,22 +178,20 @@ class CodeValidator:
                 blocked_packages=blocked_packages,
                 allowed_versions={
                     # Set minimum versions for security
-                    'pillow': {'>=9.0.0'},
-                    'numpy': {'>=1.22.2'},
-                    'requests': {'>=2.31.0'},
-                    'pandas': {'>=1.4.0'},
-                    'tensorflow': {'>=2.11.1'},
-                    'torch': {'>=1.13.1'},
-                    'urllib3': {'>=1.26.5'},
-                    'scipy': {'>=1.10.0'}
-                }
+                    "pillow": {">=9.0.0"},
+                    "numpy": {">=1.22.2"},
+                    "requests": {">=2.31.0"},
+                    "pandas": {">=1.4.0"},
+                    "tensorflow": {">=2.11.1"},
+                    "torch": {">=1.13.1"},
+                    "urllib3": {">=1.26.5"},
+                    "scipy": {">=1.10.0"},
+                },
             )
         )
 
         # Create a rules lookup for easy access
-        self.rules_lookup: Dict[str, ValidationRule] = {
-            rule.name: rule for rule in self.rules
-        }
+        self.rules_lookup: Dict[str, ValidationRule] = {rule.name: rule for rule in self.rules}
 
     def enable_rule(self, rule_name: str):
         """Enable a specific validation rule"""
@@ -200,23 +211,21 @@ class CodeValidator:
 
         # Regular expressions to match different installation patterns
         pip_patterns = [
-            r'!(?:python\s+-m\s+)?pip(?:3)?\s+install\s+([-\w\d\s,\.=<>]+)',
-            r'!conda\s+install\s+([-\w\d\s,\.=<>]+)'
+            r"!(?:python\s+-m\s+)?pip(?:3)?\s+install\s+([-\w\d\s,\.=<>]+)",
+            r"!conda\s+install\s+([-\w\d\s,\.=<>]+)",
         ]
 
         for pattern in pip_patterns:
             matches = re.finditer(pattern, code, re.MULTILINE)
             for match in matches:
                 packages_str = match.group(1)
-                packages = [p.strip()
-                            for p in packages_str.split() if p.strip()]
+                packages = [p.strip() for p in packages_str.split() if p.strip()]
 
                 for package in packages:
                     # Split package name and version specifier
-                    parts = re.split(r'(>=|<=|==|>|<|!=)', package)
+                    parts = re.split(r"(>=|<=|==|>|<|!=)", package)
                     package_name = parts[0]
-                    version_spec = ''.join(parts[1:]) if len(
-                        parts) > 1 else None
+                    version_spec = "".join(parts[1:]) if len(parts) > 1 else None
 
                     # Check if package is blocked
                     if package_name.lower() in package_rule.blocked_packages:
@@ -229,33 +238,35 @@ class CodeValidator:
                     # Check version constraints if they exist for this package
                     if version_spec and package_name in package_rule.allowed_versions:
                         from packaging import specifiers, version
+
                         try:
-                            allowed = specifiers.SpecifierSet(
-                                ','.join(package_rule.allowed_versions[package_name]))
+                            allowed = specifiers.SpecifierSet(",".join(package_rule.allowed_versions[package_name]))
 
                             # For exact versions, directly check if they satisfy the allowed specifier
-                            if '==' in version_spec:
-                                ver = version.Version(
-                                    version_spec.split('==')[1])
+                            if "==" in version_spec:
+                                ver = version.Version(version_spec.split("==")[1])
                                 if not allowed.contains(ver):
-                                    return False, f"Version {ver} of {package_name} is not allowed. Must satisfy: {allowed}"
+                                    return (
+                                        False,
+                                        f"Version {ver} of {package_name} is not allowed. Must satisfy: {allowed}",
+                                    )
                             else:
                                 # For range specifications, check against minimum allowed version
-                                requested = specifiers.SpecifierSet(
-                                    version_spec)
+                                requested = specifiers.SpecifierSet(version_spec)
                                 min_allowed = None
                                 for spec in allowed:
-                                    if '>=' in str(spec):
-                                        min_allowed = str(
-                                            spec).replace('>=', '')
+                                    if ">=" in str(spec):
+                                        min_allowed = str(spec).replace(">=", "")
                                         break
 
                                 if min_allowed:
                                     min_ver = version.Version(min_allowed)
-                                    test_ver = version.Version(
-                                        str(min_ver.major) + '.' + str(min_ver.minor))
+                                    test_ver = version.Version(str(min_ver.major) + "." + str(min_ver.minor))
                                     if test_ver < min_ver and requested.contains(test_ver):
-                                        return False, f"Version {version_spec} of {package_name} would allow versions below minimum required ({min_allowed}). Must satisfy: {allowed}"
+                                        return (
+                                            False,
+                                            f"Version {version_spec} of {package_name} would allow versions below minimum required ({min_allowed}). Must satisfy: {allowed}",
+                                        )
 
                         except Exception as e:
                             return False, f"Invalid version specification for {package_name}: {str(e)}"
@@ -264,8 +275,7 @@ class CodeValidator:
 
     def _validate_jupyter_commands(self, code: str) -> Tuple[bool, Optional[str]]:
         """Validates Jupyter shell commands for safety"""
-        shell_lines = [line.strip() for line in code.split('\n')
-                       if line.strip().startswith('!')]
+        shell_lines = [line.strip() for line in code.split("\n") if line.strip().startswith("!")]
 
         for line in shell_lines:
             command = line[1:].strip().split()[0]  # Get first word after !
@@ -289,12 +299,12 @@ class CodeValidator:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for name in node.names:
-                    base_module = name.name.split('.')[0]
+                    base_module = name.name.split(".")[0]
                     if base_module in self.forbidden_modules:
                         return False, f"Forbidden import: {name.name}"
 
             elif isinstance(node, ast.ImportFrom):
-                if node.module and node.module.split('.')[0] in self.forbidden_modules:
+                if node.module and node.module.split(".")[0] in self.forbidden_modules:
                     return False, f"Forbidden import: {node.module}"
         return True, None
 
@@ -321,9 +331,8 @@ class CodeValidator:
         python_code = []
         jupyter_commands = []
 
-        for line in code.split('\n'):
-            is_jupyter = any(pattern.match(line.strip())
-                             for pattern in self.jupyter_patterns)
+        for line in code.split("\n"):
+            is_jupyter = any(pattern.match(line.strip()) for pattern in self.jupyter_patterns)
             if is_jupyter:
                 jupyter_commands.append(line)
             else:
@@ -337,8 +346,7 @@ class CodeValidator:
                     is_valid, message = rule.validation_fn(code)
                 # Run other validations only on Python code parts
                 else:
-                    is_valid, message = rule.validation_fn(
-                        '\n'.join(python_code))
+                    is_valid, message = rule.validation_fn("\n".join(python_code))
 
                 if not is_valid and message:
                     failures.append(message)

@@ -16,11 +16,10 @@ class ExecutionRequest(BaseModel):
     code: str = Field(max_length=10000)
     language: str = Field(default="python", pattern="^python$")
     dependencies: Optional[List[str]] = Field(default_factory=list)
-    execution_options: ExecutionOptions = Field(
-        default_factory=ExecutionOptions)
+    execution_options: ExecutionOptions = Field(default_factory=ExecutionOptions)
     session_id: Optional[str] = None
 
-    @field_validator('code')
+    @field_validator("code")
     @classmethod
     def validate_code(cls, code: str) -> str:
         validator = CodeValidator()
@@ -32,8 +31,7 @@ class ExecutionRequest(BaseModel):
 
 class SessionRequest(BaseModel):
     dependencies: Optional[List[str]] = Field(default_factory=list)
-    execution_options: ExecutionOptions = Field(
-        default_factory=ExecutionOptions)
+    execution_options: ExecutionOptions = Field(default_factory=ExecutionOptions)
 
 
 class ExecutionResponse(BaseModel):
