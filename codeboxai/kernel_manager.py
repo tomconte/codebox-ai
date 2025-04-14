@@ -76,6 +76,8 @@ class KernelManager:
         return connection_info, connection_file
 
     def start_kernel(self, kernel_id: str) -> None:
+        logger.info(f"Starting kernel {kernel_id}...")
+
         connection_info, connection_file = self._create_connection_file(kernel_id)
 
         port_bindings = {
@@ -152,6 +154,8 @@ class KernelManager:
             raise RuntimeError(f"Kernel failed to start: {e}")
 
     def stop_kernel(self, kernel_id: str) -> None:
+        logger.info(f"Stopping kernel {kernel_id}...")
+
         if kernel_id in self.kernels:
             kernel_info = self.kernels[kernel_id]
 
@@ -179,6 +183,8 @@ class KernelManager:
             del self.kernels[kernel_id]
 
     def execute_code(self, kernel_id: str, code: str, timeout: int = 60) -> Dict[str, Any]:
+        logger.info(f"Executing code in kernel {kernel_id}...")
+
         if kernel_id not in self.kernels:
             raise ValueError(f"Kernel {kernel_id} not found")
 
@@ -235,6 +241,8 @@ class KernelManager:
         return result
 
     def cleanup(self):
+        logger.info("Cleaning up kernels and connection directory...")
+
         for kernel_id in list(self.kernels.keys()):
             self.stop_kernel(kernel_id)
 
