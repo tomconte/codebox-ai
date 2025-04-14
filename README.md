@@ -21,28 +21,45 @@ A secure Python code execution service that provides a self-hosted alternative t
 
 - Python 3.9+
 - Docker
+- [uv](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
 
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/codebox-ai.git
 cd codebox-ai
 ```
 
-2. Install dependencies:
+2. Install dependencies with uv:
+
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-pip install -r requirements.txt
+# Install uv if you don't have it yet
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create a virtual environment and install dependencies in one step
+uv sync
+
+# Or to install with development dependencies
+uv sync --extra dev
+```
 ```
 
 3. Start the server:
+
 ```bash
-python -m codeboxai.main
+uv run -m codeboxai.main
 ```
 
 The API will be available at `http://localhost:8000`
+
+### Development setup
+
+For development, install with the development extras:
+```bash
+uv sync --extra "dev docs"
+```
 
 ### Docker "file not found" error
 
@@ -63,6 +80,7 @@ export DOCKER_HOST="unix:///Users/tconte/.docker/run/docker.sock"
 ### Direct API Usage
 
 1. Create a new session:
+
 ```bash
 curl -X POST http://localhost:8000/sessions \
   -H "Content-Type: application/json" \
@@ -72,6 +90,7 @@ curl -X POST http://localhost:8000/sessions \
 ```
 
 2. Execute code in the session:
+
 ```bash
 curl -X POST http://localhost:8000/execute \
   -H "Content-Type: application/json" \
@@ -81,7 +100,20 @@ curl -X POST http://localhost:8000/execute \
   }'
 ```
 
-3. Execute more code in the same session:
+3. Check execution status:
+
+```bash
+curl -X GET http://localhost:8000/execute/YOUR_REQUEST_ID/status
+```
+
+4. Get execution results:
+
+```bash
+curl -X GET http://localhost:8000/execute/YOUR_REQUEST_ID/results
+```
+
+5. Execute more code in the same session:
+
 ```bash
 curl -X POST http://localhost:8000/execute \
   -H "Content-Type: application/json" \
@@ -96,6 +128,7 @@ curl -X POST http://localhost:8000/execute \
 An example script is provided to demonstrate integration with OpenAI's GPT models.
 
 1. Create a `.env` file in the project root:
+
 ```
 AZURE_OPENAI_ENDPOINT=https://xxx.cognitiveservices.azure.com/
 AZURE_OPENAI_API_KEY=foo
@@ -104,13 +137,15 @@ OPENAI_API_VERSION=2024-05-01-preview
 ```
 
 2. Install additional requirements:
+
 ```bash
-pip install -r examples/requirements.txt
+uv sync --extra "examples"
 ```
 
 3. Run the example:
+
 ```bash
-python examples/example_openai.py
+uv run examples/example_openai.py
 ```
 
 This will start an interactive session where you can chat with GPT-4 and have it execute Python code. The script maintains state between executions, so variables and imports persist across interactions.
