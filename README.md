@@ -1,6 +1,6 @@
 # CodeBox-AI
 
-A secure Python code execution service that provides a self-hosted alternative to OpenAI's Code Interpreter. Built with FastAPI and IPython kernels, it supports session-based code execution and integrates with LLM function calling.
+A secure Python code execution service that provides a self-hosted alternative to OpenAI's Code Interpreter. Built with FastAPI and IPython kernels, it supports session-based code execution and integrates with LLM function calling. It also now supports the Model Context Protocol (MCP) for seamless integration with LLM applications.
 
 ## Features
 
@@ -16,6 +16,59 @@ A secure Python code execution service that provides a self-hosted alternative t
   - AST-based code analysis
   - Protection against dangerous imports and operations
   - Support for Jupyter magic commands and shell operations
+
+## MCP Server (Model Context Protocol)
+
+CodeBox-AI now supports the Model Context Protocol (MCP), allowing LLM applications (like Claude Desktop) to interact with your code execution service in a standardized way.
+
+### Running the MCP Server
+
+You can run the MCP server in several ways:
+
+- **Standalone (for MCP clients or Claude Desktop):**
+  ```bash
+  uv run mcp dev mcp_server.py
+  ```
+  This starts the MCP server in development mode for local testing and debugging.
+
+- **Register with Claude Desktop:**
+  ```bash
+  uv run mcp install mcp_server.py --name "CodeBox-AI"
+  ```
+  This will make your server available to Claude Desktop as a custom tool.
+
+- **Combined FastAPI + MCP server:**
+  ```bash
+  python run.py
+  ```
+  This starts both the FastAPI API and the MCP server (MCP available at `/mcp`).
+
+- **MCP server only:**
+  ```bash
+  python run.py --mode mcp
+  ```
+
+### MCP Features
+
+- `execute_code`: Execute Python code and return results
+- `session://{session_id}`: Get info about a session
+- `sessions://`: List all active sessions
+
+### Example: Testing with MCP Inspector
+
+1. Start the MCP server:
+   ```bash
+   uv run mcp dev mcp_server.py
+   ```
+2. Open the [MCP Inspector](https://inspector.modelcontext.org/) and connect to your local server.
+
+### Example: Registering with Claude Desktop
+
+1. Start the server:
+   ```bash
+   uv run mcp install mcp_server.py --name "CodeBox-AI"
+   ```
+2. Open Claude Desktop and add your server as a custom tool.
 
 ## Prerequisites 
 
@@ -43,7 +96,6 @@ uv sync
 
 # Or to install with development dependencies
 uv sync --extra dev
-```
 ```
 
 3. Start the server:
