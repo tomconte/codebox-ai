@@ -12,6 +12,7 @@ from mcp.server.fastmcp import FastMCP, Context
 from mcp.types import ImageContent, TextContent
 
 from codeboxai.service import CodeExecutionService
+from codeboxai.models import ExecutionRequest
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +71,8 @@ def create_mcp_server(name: str = "CodeBox-AI") -> FastMCP:
                 session_id = await mcp_service.code_service.create_session(dependencies)
 
             # Create a new execution request
-            request_data = {"code": code, "session_id": session_id, "dependencies": dependencies or []}
-            request_id = await mcp_service.code_service.create_execution_request(request_data)
+            exec_request = ExecutionRequest(code=code, dependencies=dependencies or [])
+            request_id = await mcp_service.code_service.create_execution_request(exec_request)
 
             # Execute the code
             await mcp_service.code_service.execute_code(request_id)
@@ -102,15 +103,17 @@ def create_mcp_server(name: str = "CodeBox-AI") -> FastMCP:
             if not contents:
                 contents.append(types.TextContent(type="text", text="No output."))
 
-            # TODO: Implement session management; in the meantime, delete session
-            mcp_service.code_service.cleanup_session(session_id)
-
             return contents
         except Exception as e:
             logger.error(f"Error executing code: {e}")
             from mcp import types
 
             return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+        finally:
+            # TODO: Implement session management; in the meantime, delete session
+            if session_id:
+                mcp_service.code_service.cleanup_session(session_id)
 
     @mcp.resource("session://{session_id}")
     async def get_session_info(session_id: str) -> str:
