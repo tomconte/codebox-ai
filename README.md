@@ -1,6 +1,8 @@
 # CodeBox-AI
 
-A secure Python code execution service that provides a self-hosted alternative to OpenAI's Code Interpreter. Built with FastAPI and IPython kernels, it supports session-based code execution and integrates with LLM function calling. It also now supports the Model Context Protocol (MCP) for seamless integration with LLM applications.
+A secure Python code execution service that provides a self-hosted alternative to OpenAI's Code Interpreter or Anthropic's Claude analysis tool. Built with FastAPI and IPython kernels, it supports session-based code execution and integrates with LLM function calling. 
+
+It also now supports the Model Context Protocol (MCP) for seamless integration with LLM applications.
 
 ## Features
 
@@ -68,11 +70,31 @@ You can run the MCP server in several ways:
 
 ### Example: Registering with Claude Desktop
 
-1. Start the server:
-   ```bash
-   uv run mcp install mcp_server.py --name "CodeBox-AI"
-   ```
-2. Open Claude Desktop and add your server as a custom tool.
+1. Configure the MCP server in the Claude Desktop settings:
+
+Edit the file `~/Library/Application Support/Claude/claude_desktop_config.json`. The following is an example configuration:
+
+  ```json
+  {
+    "mcpServers": {
+      "CodeBox-AI": {
+        "command": "uv",
+        "args": [
+          "run",
+          "--project",
+          "/Users/username/src/codebox-ai",
+          "/Users/username/src/codebox-ai/mcp_server.py",
+          "--mount",
+          "/Users/username/Downloads"
+        ]
+      }
+    }
+  }
+  ```
+
+  Unfortunately, all paths need to be absolute. This example shows how to mount the `Downloads` directory into the container.
+
+2. Open Claude Desktop and the server should appear as a custom tool.
 
 ## Prerequisites 
 
