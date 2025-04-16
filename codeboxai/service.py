@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from codeboxai.kernel_manager import KernelManager
-from codeboxai.models import ExecutionOptions
+from codeboxai.models import ExecutionOptions, ExecutionRequest
 
 logger = logging.getLogger(__name__)
 
@@ -63,17 +63,14 @@ class CodeExecutionService:
             self.kernel_manager.stop_kernel(session_id)
             raise
 
-    async def create_execution_request(self, request_data: Dict[str, Any]) -> str:
+    async def create_execution_request(self, request: ExecutionRequest) -> str:
         request_id = str(uuid.uuid4())
-        session_id = request_data.get("session_id")
+        session_id = request.session_id
 
         # If no session_id provided, create a new session
         if not session_id:
-            execution_options = None
-            if "execution_options" in request_data:
-                execution_options = ExecutionOptions(**request_data["execution_options"])
             session_id = await self.create_session(
-                request_data.get("dependencies"), execution_options=execution_options
+                request.dependencies, request.execution_options
             )
 
         # Verify session exists
@@ -84,7 +81,7 @@ class CodeExecutionService:
             "id": request_id,
             "session_id": session_id,
             "status": "initializing",
-            "code": request_data["code"],
+            "code": request.code,
             "created_at": datetime.utcnow().isoformat(),
         }
 

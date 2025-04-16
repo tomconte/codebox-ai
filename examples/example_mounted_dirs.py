@@ -1,6 +1,6 @@
 import asyncio
 import os
-from codeboxai.models import MountPoint, ExecutionOptions
+from codeboxai.models import MountPoint, ExecutionOptions, ExecutionRequest
 from codeboxai.service import CodeExecutionService
 
 
@@ -42,7 +42,11 @@ else:
 """
 
     # Create an execution request
-    request_id = await service.create_execution_request({"code": code, "session_id": session_id})
+    request_id = await service.create_execution_request(ExecutionRequest(
+        code=code,
+        language="python",
+        session_id=session_id,
+    ))
     print(f"Created execution request with ID: {request_id}")
 
     # Execute the code

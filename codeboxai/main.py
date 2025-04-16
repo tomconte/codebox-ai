@@ -44,7 +44,7 @@ async def create_session(request: SessionRequest):
 async def create_execution(request: ExecutionRequest, background_tasks: BackgroundTasks):
     """Execute code in a session"""
     try:
-        request_id = await code_service.create_execution_request(request.model_dump())
+        request_id = await code_service.create_execution_request(request)
         background_tasks.add_task(code_service.execute_code, request_id)
 
         return ExecutionResponse(

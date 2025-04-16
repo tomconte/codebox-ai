@@ -12,7 +12,7 @@ from mcp.server.fastmcp import FastMCP, Context
 from mcp.types import ImageContent, TextContent
 
 from codeboxai.service import CodeExecutionService
-from codeboxai.models import ExecutionRequest
+from codeboxai.models import ExecutionRequest, ExecutionOptions, MountPoint
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,13 @@ logger = logging.getLogger(__name__)
 class MCPCodeService:
     """MCP interface to CodeBox-AI execution service"""
 
-    def __init__(self):
+    def __init__(self, mount_dirs: Optional[List[str]] = None):
         self.code_service = CodeExecutionService()
         self.active_sessions: Dict[str, Dict[str, Any]] = {}
+        self.mount_dirs = mount_dirs or []
+
+        if self.mount_dirs:
+            logger.info(f"Configured server with {len(self.mount_dirs)} mounted directories: {self.mount_dirs}")
 
     async def _wait_for_execution(self, request_id: str, timeout: int = 60) -> Dict[str, Any]:
         """Wait for code execution to complete and return results"""
@@ -35,6 +39,18 @@ class MCPCodeService:
 
         return {"status": "timeout", "error": "Execution timed out", "output": []}
 
+    def _create_mount_points(self) -> List[MountPoint]:
+        """Create MountPoint objects from configured directories"""
+        mount_points = []
+        for dir_path in self.mount_dirs:
+            # Mount the directory at the same path in the container
+            mount_points.append(
+                MountPoint(
+                    host_path=dir_path, container_path=dir_path, read_only=True  # Default to read-only for security
+                )
+            )
+        return mount_points
+
 
 @asynccontextmanager
 async def codebox_lifespan(server: FastMCP) -> AsyncIterator[None]:
@@ -44,9 +60,17 @@ async def codebox_lifespan(server: FastMCP) -> AsyncIterator[None]:
     logger.info("Shutting down CodeBox-AI MCP server")
 
 
-def create_mcp_server(name: str = "CodeBox-AI") -> FastMCP:
-    """Create and configure the MCP server"""
-    mcp_service = MCPCodeService()
+def create_mcp_server(name: str = "CodeBox-AI", mount_dirs: Optional[List[str]] = None) -> FastMCP:
+    """Create and configure the MCP server
+
+    Args:
+        name: Name of the MCP server
+        mount_dirs: List of directories to mount in the execution environment
+
+    Returns:
+        Configured FastMCP server instance
+    """
+    mcp_service = MCPCodeService(mount_dirs)
     mcp = FastMCP(name, lifespan=codebox_lifespan)
 
     @mcp.tool()
@@ -66,12 +90,20 @@ def create_mcp_server(name: str = "CodeBox-AI") -> FastMCP:
 
         contents: List[TextContent | ImageContent] = []
         try:
+            # Create execution options with mount points if configured
+            execution_options = None
+            mount_points = mcp_service._create_mount_points()
+            if mount_points:
+                execution_options = ExecutionOptions(mount_points=mount_points)
+
             session_id = None  # TODO: Implement session management if/when supported by MCP
             if not session_id:
-                session_id = await mcp_service.code_service.create_session(dependencies)
+                session_id = await mcp_service.code_service.create_session(
+                    dependencies=dependencies or [], execution_options=execution_options
+                )
 
             # Create a new execution request
-            exec_request = ExecutionRequest(code=code, dependencies=dependencies or [])
+            exec_request = ExecutionRequest(session_id=session_id, code=code)
             request_id = await mcp_service.code_service.create_execution_request(exec_request)
 
             # Execute the code
