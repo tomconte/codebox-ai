@@ -6,8 +6,6 @@ import logging
 from starlette.applications import Starlette
 from starlette.routing import Mount
 
-from fastapi import FastAPI
-
 from codeboxai.main import app as fastapi_app
 from codeboxai.mcp_server import create_mcp_server
 

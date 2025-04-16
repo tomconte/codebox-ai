@@ -265,7 +265,9 @@ class CodeValidator:
                                     if test_ver < min_ver and requested.contains(test_ver):
                                         return (
                                             False,
-                                            f"Version {version_spec} of {package_name} would allow versions below minimum required ({min_allowed}). Must satisfy: {allowed}",
+                                            f"Version {version_spec} of {package_name} would allow "
+                                            f"versions below minimum required ({min_allowed}). "
+                                            f"Must satisfy: {allowed}",
                                         )
 
                         except Exception as e:

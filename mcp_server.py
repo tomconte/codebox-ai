@@ -13,6 +13,8 @@ import logging
 import os
 import sys
 
+from codeboxai.mcp_server import create_mcp_server
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -27,8 +29,6 @@ if sys.platform == "darwin" and "DOCKER_HOST" not in os.environ:
     if os.path.exists(f"/Users/{user_name}/.docker/run/docker.sock"):
         docker_path = f"/Users/{user_name}/.docker/run/docker.sock"
     os.environ["DOCKER_HOST"] = f"unix://{docker_path}"
-
-from codeboxai.mcp_server import create_mcp_server
 
 # Create the MCP server
 mcp = create_mcp_server("CodeBox-AI")

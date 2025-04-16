@@ -92,7 +92,7 @@ class KernelManager:
 
         # Initialize volumes with connection file
         volumes = {str(connection_file): {"bind": "/opt/connection/kernel.json", "mode": "ro"}}
-        
+
         # Add user-requested mount points
         if mount_points:
             logger.info(f"Adding {len(mount_points)} mount points for kernel {kernel_id}")

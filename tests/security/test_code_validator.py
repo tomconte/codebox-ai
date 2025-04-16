@@ -13,7 +13,7 @@ def test_enable_disable_rules(validator):
     validator.disable_rule("dangerous_imports")
 
     # This should now pass even though it imports os
-    code = "import os"
+    code = "import sys"
     is_valid, message = validator.validate_code(code)
     assert is_valid
 
@@ -48,7 +48,7 @@ def test_individual_rules(validator):
 
 def test_code_validator_dangerous_imports():
     validator = CodeValidator()
-    code = "import os"
+    code = "import sys"
     is_valid, message = validator.validate_code(code)
     assert not is_valid
     assert "Forbidden import" in message
@@ -120,7 +120,7 @@ def test_code_validator_dangerous_code_with_jupyter():
     validator = CodeValidator()
     code = """
 !pip install pandas
-import os  # This should still be caught
+import sys  # This should still be caught
     """
     is_valid, message = validator.validate_code(code)
     assert not is_valid

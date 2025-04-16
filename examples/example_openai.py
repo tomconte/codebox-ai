@@ -220,10 +220,13 @@ if __name__ == "__main__":
         messages = [
             {
                 "role": "system",
-                "content": """You are a helpful AI assistant with the ability to execute Python code. 
-            When a user asks you to perform calculations, create visualizations, or analyze data, you can write 
-            and execute Python code to help them. The code executes in a persistent session, so variables and 
-            imports are maintained between executions. Always explain your approach before executing code.""",
+                "content": (
+                    "You are a helpful AI assistant with the ability to execute Python code. "
+                    "When a user asks you to perform calculations, create visualizations, or analyze data, you can "
+                    "write and execute Python code to help them. The code executes in a persistent session, so "
+                    "variables and imports are maintained between executions. Always explain your approach "
+                    "before executing code."
+                ),
             }
         ]
 
