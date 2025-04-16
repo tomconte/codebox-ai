@@ -7,7 +7,9 @@ import socket
 import tempfile
 import jupyter_client
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List, Optional
+
+from codeboxai.models import MountPoint
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +77,7 @@ class KernelManager:
 
         return connection_info, connection_file
 
-    def start_kernel(self, kernel_id: str) -> None:
+    def start_kernel(self, kernel_id: str, mount_points: Optional[List[MountPoint]] = None) -> None:
         logger.info(f"Starting kernel {kernel_id}...")
 
         connection_info, connection_file = self._create_connection_file(kernel_id)
@@ -88,11 +90,22 @@ class KernelManager:
             f"{connection_info['hb_port']}/tcp": connection_info["hb_port"],
         }
 
+        # Initialize volumes with connection file
+        volumes = {str(connection_file): {"bind": "/opt/connection/kernel.json", "mode": "ro"}}
+        
+        # Add user-requested mount points
+        if mount_points:
+            logger.info(f"Adding {len(mount_points)} mount points for kernel {kernel_id}")
+            for mount in mount_points:
+                mode = "ro" if mount.read_only else "rw"
+                volumes[mount.host_path] = {"bind": mount.container_path, "mode": mode}
+                logger.info(f"Mounting {mount.host_path} to {mount.container_path} ({mode})")
+
         container_config = {
             "image": self.image_name,
             "command": ["python", "-m", "ipykernel_launcher", "-f", "/opt/connection/kernel.json"],
             "environment": {"PYTHONPATH": "/opt/kernel"},
-            "volumes": {str(connection_file): {"bind": "/opt/connection/kernel.json", "mode": "ro"}},
+            "volumes": volumes,  # Updated volumes with mount points
             "ports": port_bindings,
             "detach": True,
             "remove": False,

@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from codeboxai.kernel_manager import KernelManager
+from codeboxai.models import ExecutionOptions
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +16,21 @@ class CodeExecutionService:
         self.results: Dict[str, Dict[str, Any]] = {}
         self.sessions: Dict[str, Dict[str, Any]] = {}
 
-    async def create_session(self, dependencies: Optional[List[str]] = None) -> str:
+    async def create_session(
+        self, dependencies: Optional[List[str]] = None, execution_options: Optional[ExecutionOptions] = None
+    ) -> str:
         """Create a new session with its own kernel"""
         session_id = str(uuid.uuid4())
 
         try:
-            # Start a new kernel for this session
-            self.kernel_manager.start_kernel(session_id)
+            # Extract mount points if provided
+            mount_points = None
+            if execution_options and execution_options.mount_points:
+                mount_points = execution_options.mount_points
+                logger.info(f"Session {session_id} requested {len(mount_points)} mount points")
+
+            # Start a new kernel for this session with mount points if provided
+            self.kernel_manager.start_kernel(session_id, mount_points=mount_points)
 
             # Install dependencies if any
             if dependencies:
@@ -39,6 +48,7 @@ class CodeExecutionService:
                 "created_at": datetime.utcnow().isoformat(),
                 "last_used": datetime.utcnow().isoformat(),
                 "dependencies": dependencies or [],
+                "execution_options": execution_options.dict() if execution_options else {},
             }
 
             logger.info(f"Created session {session_id}")
@@ -59,7 +69,12 @@ class CodeExecutionService:
 
         # If no session_id provided, create a new session
         if not session_id:
-            session_id = await self.create_session(request_data.get("dependencies"))
+            execution_options = None
+            if "execution_options" in request_data:
+                execution_options = ExecutionOptions(**request_data["execution_options"])
+            session_id = await self.create_session(
+                request_data.get("dependencies"), execution_options=execution_options
+            )
 
         # Verify session exists
         if session_id not in self.sessions:

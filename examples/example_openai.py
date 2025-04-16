@@ -17,16 +17,26 @@ client = AzureOpenAI()
 # CodeBox-AI API configuration
 CODEBOX_URL = "http://localhost:8000"
 
+# You can change this to any local path you want to mount
+# For example, /Users/yourusername/data, etc.
+LOCAL_MOUNT_PATH = "/tmp"
+CONTAINER_MOUNT_PATH = "/data"
+
 
 class CodeBoxSession:
     """Manages a CodeBox-AI session"""
 
-    def __init__(self, dependencies: Optional[List[str]] = None):
-        self.session_id = self._create_session(dependencies)
+    def __init__(self, dependencies: Optional[List[str]] = None, execution_options: Optional[Dict[str, Any]] = None):
+        self.session_id = self._create_session(dependencies, execution_options)
 
-    def _create_session(self, dependencies: Optional[List[str]] = None) -> str:
+    def _create_session(
+        self, dependencies: Optional[List[str]] = None, execution_options: Optional[Dict[str, Any]] = None
+    ) -> str:
         """Create a new CodeBox session"""
-        response = requests.post(f"{CODEBOX_URL}/sessions", json={"dependencies": dependencies or []})
+        response = requests.post(
+            f"{CODEBOX_URL}/sessions",
+            json={"dependencies": dependencies or [], "execution_options": execution_options or {}},
+        )
         response.raise_for_status()
         return response.json()["session_id"]
 
@@ -192,7 +202,12 @@ def chat_with_code_execution(user_message: str, messages: List[Dict], session: O
 # Example usage
 if __name__ == "__main__":
     # Create a session for multiple interactions
-    session = CodeBoxSession(dependencies=["numpy", "pandas", "matplotlib"])
+    session = CodeBoxSession(
+        dependencies=["numpy", "pandas", "matplotlib"],
+        execution_options={
+            "mount_points": [{"host_path": LOCAL_MOUNT_PATH, "container_path": CONTAINER_MOUNT_PATH, "read_only": True}]
+        },
+    )
 
     try:
         examples = [

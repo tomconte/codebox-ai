@@ -1,8 +1,48 @@
 from typing import Any, Dict, List, Optional
+import os
+from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
 from codeboxai.security.validators.code import CodeValidator
+
+
+class MountPoint(BaseModel):
+    host_path: str  # Path on host machine
+    container_path: str  # Path in container
+    read_only: bool = Field(default=True)  # Default to read-only for security
+
+    @field_validator("host_path")
+    @classmethod
+    def validate_host_path(cls, path: str) -> str:
+        # Ensure path exists
+        if not Path(path).exists():
+            raise ValueError(f"Host path does not exist: {path}")
+
+        # Basic security validation - restrict certain system directories
+        restricted_paths = ["/etc", "/var", "/bin", "/sbin", "/usr/bin", "/usr/sbin", "/boot", "/dev", "/proc", "/sys"]
+        path_obj = Path(os.path.abspath(path)).resolve()
+
+        for restricted in restricted_paths:
+            if str(path_obj).startswith(restricted):
+                raise ValueError(f"Access to {restricted} is restricted")
+
+        return str(path_obj)
+
+    @field_validator("container_path")
+    @classmethod
+    def validate_container_path(cls, path: str) -> str:
+        # Container path should be absolute
+        if not path.startswith("/"):
+            raise ValueError("Container path must be absolute")
+
+        # Restrict mounting to sensitive container locations
+        restricted_paths = ["/etc", "/var/run", "/proc", "/sys"]
+        for restricted in restricted_paths:
+            if path.startswith(restricted):
+                raise ValueError(f"Cannot mount to {restricted} in container")
+
+        return path
 
 
 class ExecutionOptions(BaseModel):
@@ -10,6 +50,7 @@ class ExecutionOptions(BaseModel):
     memory_limit: str = Field(default="2G")
     cpu_limit: str = Field(default="1")
     environment_variables: Optional[Dict[str, str]] = None
+    mount_points: Optional[List[MountPoint]] = Field(default_factory=list)
 
 
 class ExecutionRequest(BaseModel):

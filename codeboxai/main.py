@@ -32,7 +32,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def create_session(request: SessionRequest):
     """Create a new session with optional dependencies"""
     try:
-        session_id = await code_service.create_session(request.dependencies)
+        session_id = await code_service.create_session(request.dependencies, request.execution_options)
         return SessionResponse(
             session_id=session_id, status="created", created_at=code_service.sessions[session_id]["created_at"]
         )
