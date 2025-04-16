@@ -16,6 +16,10 @@ A secure Python code execution service that provides a self-hosted alternative t
   - AST-based code analysis
   - Protection against dangerous imports and operations
   - Support for Jupyter magic commands and shell operations
+- Host directory mounting
+  - Mount local directories into the container
+  - Read-only or read-write access control
+  - Security validations to prevent access to sensitive paths
 
 ## MCP Server (Model Context Protocol)
 
@@ -175,9 +179,37 @@ curl -X POST http://localhost:8000/execute \
   }'
 ```
 
-### OpenAI GPT Integration Example
+6. Create a session with mounted directories:
 
-An example script is provided to demonstrate integration with OpenAI's GPT models.
+```bash
+curl -X POST http://localhost:8000/sessions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "execution_options": {
+      "mount_points": [
+        {
+          "host_path": "/Users/tconte/Downloads",
+          "container_path": "/data/downloads",
+          "read_only": true
+        }
+      ],
+      "timeout": 300
+    }
+  }'
+```
+
+7. Execute code that accesses mounted files:
+
+```bash
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "import os\nprint(\"Files in mounted directory:\")\nfor file in os.listdir(\"/data/downloads\"):\n    print(f\" - {file}\")",
+    "session_id": "YOUR_SESSION_ID"
+  }'
+```
+
+### OpenAI GPT Integration Example
 
 1. Create a `.env` file in the project root:
 
