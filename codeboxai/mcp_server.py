@@ -65,12 +65,18 @@ def create_mcp_server(name: str = "CodeBox-AI") -> FastMCP:
 
         contents: List[TextContent | ImageContent] = []
         try:
-            session_id = None  # TODO: Implement session management
+            session_id = None  # TODO: Implement session management if/when supported by MCP
             if not session_id:
                 session_id = await mcp_service.code_service.create_session(dependencies)
+
+            # Create a new execution request
             request_data = {"code": code, "session_id": session_id, "dependencies": dependencies or []}
             request_id = await mcp_service.code_service.create_execution_request(request_data)
+
+            # Execute the code
             await mcp_service.code_service.execute_code(request_id)
+
+            # Wait for execution to complete
             result = await mcp_service._wait_for_execution(request_id)
 
             # Add text outputs
@@ -95,6 +101,9 @@ def create_mcp_server(name: str = "CodeBox-AI") -> FastMCP:
 
             if not contents:
                 contents.append(types.TextContent(type="text", text="No output."))
+
+            # TODO: Implement session management; in the meantime, delete session
+            mcp_service.code_service.cleanup_session(session_id)
 
             return contents
         except Exception as e:
