@@ -6,13 +6,13 @@ This module provides the Model Context Protocol interface for CodeBox-AI.
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional, AsyncIterator
+from typing import Any, AsyncIterator, Dict, List, Optional
 
-from mcp.server.fastmcp import FastMCP, Context
+from mcp.server.fastmcp import Context, FastMCP
 from mcp.types import ImageContent, TextContent
 
+from codeboxai.models import ExecutionOptions, ExecutionRequest, MountPoint
 from codeboxai.service import CodeExecutionService
-from codeboxai.models import ExecutionRequest, ExecutionOptions, MountPoint
 
 logger = logging.getLogger(__name__)
 

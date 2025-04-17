@@ -1,13 +1,14 @@
 import json
 import logging
-import time
-import uuid
-import docker
 import socket
 import tempfile
-import jupyter_client
+import time
+import uuid
 from pathlib import Path
-from typing import Dict, Any, Tuple, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+import docker
+import jupyter_client
 
 from codeboxai.models import MountPoint
 
