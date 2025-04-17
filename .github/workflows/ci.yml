@@ -30,7 +30,7 @@ jobs:
             ${{ runner.os }}-venv-
 
       - name: Install dependencies (dev, docs)
-        run: uv sync --extra "dev docs"
+        run: uv sync
 
       - name: Check formatting (black)
         run: uv run -m black . --check
