@@ -25,7 +25,7 @@ class CodeExecutionService:
         try:
             # Extract mount points if provided
             mount_points = None
-            if (execution_options and execution_options.mount_points):
+            if execution_options and execution_options.mount_points:
                 mount_points = execution_options.mount_points
                 logger.info(f"Session {session_id} requested {len(mount_points)} mount points")
 
