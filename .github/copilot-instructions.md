@@ -48,8 +48,8 @@ uv run -m codeboxai.main
 - Individual checks:
   - Format code: `uv run -m black .`
   - Check imports: `uv run -m isort .`
-  - Lint code: `uv run -m flake8`
-  - Type checking: `uv run -m mypy .`
+  - Lint code: `uv run -m flake8 codeboxai`
+  - Type checking: `uv run -m mypy codeboxai`
 
 ### Project Management
 - Add a dependency: `uv add <package-name>`
