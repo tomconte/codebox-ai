@@ -12,10 +12,10 @@ Optional arguments:
   --mount /path/to/directory1 /path/to/directory2 ... : Directories to mount in the execution environment
 """
 
+import argparse
 import logging
 import os
 import sys
-import argparse
 
 from codeboxai.mcp_server import create_mcp_server
 

@@ -8,6 +8,7 @@ import argparse
 import logging
 import os
 import sys
+
 import uvicorn
 
 from codeboxai.main import app as fastapi_app
