@@ -29,7 +29,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
 
-      - name: Install dependencies (dev, docs)
+      - name: Install dependencies
         run: uv sync
 
       - name: Check formatting (black)
