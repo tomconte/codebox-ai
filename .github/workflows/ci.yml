@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Set up cache for uv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+
+      - name: Create and activate virtualenv
+        run: |
+          uv venv
+          source .venv/bin/activate
+
+      - name: Install dependencies (dev, docs)
+        run: uv sync --extra "dev docs"
+
+      - name: Check formatting (black)
+        run: uv run -m black . --check
+
+      - name: Check imports (isort)
+        run: uv run -m isort . --check-only
+
+      - name: Lint code (flake8)
+        run: uv run -m flake8
+
+      - name: Type checking (mypy)
+        run: uv run -m mypy .
+
+      - name: Run tests with coverage
+        run: uv run -m pytest --cov=codeboxai --cov-report=term --cov-report=term-missing --cov-report=xml
+
+      - name: Display coverage summary in workflow
+        if: always()
+        run: |
+          echo '### Coverage Report' >> $GITHUB_STEP_SUMMARY
+          uv run -m coverage report >> $GITHUB_STEP_SUMMARY
