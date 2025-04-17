@@ -5,13 +5,9 @@ This guide contains instructions for developing, building, and testing the CodeB
 ## Build Commands
 
 ### Environment Setup
-- Create virtual environment: `uv venv`
-- Activate virtual environment: 
-  - Unix/MacOS: `source .venv/bin/activate`
-  - Windows: `.venv\Scripts\activate`
 - Install all dependencies: `uv sync`
-- Install with dev dependencies: `uv sync --extra dev`
-- Install with specific extras: `uv sync --extra "dev docs"` or `uv sync --extra "dev docs examples"`
+- Install without dependencies: `uv sync --no-dev`
+- Install with specific extras: `uv sync --extra "examples"`
 
 ### Running the Application
 
@@ -125,30 +121,24 @@ def function(param1: str, param2: int) -> bool:
 
 ## Example Workflow
 
-1. Create and activate environment:
+1. Install dependencies:
 ```bash
-uv venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+uv sync
 ```
 
-2. Install dependencies with development extras:
-```bash
-uv sync --extra "dev docs"
-```
-
-3. Run pre-commit to set up git hooks:
+2. Run pre-commit to set up git hooks:
 ```bash
 uv run pre-commit install
 ```
 
-4. Make your code changes
+3. Make your code changes
 
-5. Run tests to verify changes:
+4. Run tests to verify changes:
 ```bash
 uv run -m pytest
 ```
 
-6. Check code quality:
+5. Check code quality:
 ```bash
 uv run -m black .
 uv run -m isort .
@@ -156,7 +146,7 @@ uv run -m flake8
 uv run -m mypy .
 ```
 
-7. Run the server locally:
+6. Run the server locally:
 ```bash
 uv run -m codeboxai.main
 ```

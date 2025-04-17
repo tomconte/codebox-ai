@@ -29,11 +29,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
 
-      - name: Create and activate virtualenv
-        run: |
-          uv venv
-          source .venv/bin/activate
-
       - name: Install dependencies (dev, docs)
         run: uv sync --extra "dev docs"
 

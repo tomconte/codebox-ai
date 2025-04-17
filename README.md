@@ -119,9 +119,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Create a virtual environment and install dependencies in one step
 uv sync
-
-# Or to install with development dependencies
-uv sync --extra dev
 ```
 
 3. Start the server:
