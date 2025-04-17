@@ -69,13 +69,7 @@ class CodeExecutionService:
 
         # If no session_id provided, create a new session
         if not session_id:
-            session_id = await self.create_session(
-                request.dependencies, request.execution_options
-            )
-
-        # Verify session exists
-        if session_id not in self.sessions:
-            raise ValueError(f"Session {session_id} not found")
+            session_id = await self.create_session(request.dependencies, request.execution_options)
 
         self.requests[request_id] = {
             "id": request_id,
