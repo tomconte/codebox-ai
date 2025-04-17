@@ -25,7 +25,7 @@ class CodeExecutionService:
         try:
             # Extract mount points if provided
             mount_points = None
-            if execution_options and execution_options.mount_points:
+            if (execution_options and execution_options.mount_points):
                 mount_points = execution_options.mount_points
                 logger.info(f"Session {session_id} requested {len(mount_points)} mount points")
 
@@ -67,9 +67,8 @@ class CodeExecutionService:
         request_id = str(uuid.uuid4())
         session_id = request.session_id
 
-        # If no session_id provided, create a new session
         if not session_id:
-            session_id = await self.create_session(request.dependencies, request.execution_options)
+            raise ValueError("session_id must be provided. Create a session first using /sessions.")
 
         self.requests[request_id] = {
             "id": request_id,

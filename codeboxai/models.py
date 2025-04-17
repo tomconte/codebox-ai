@@ -56,9 +56,7 @@ class ExecutionOptions(BaseModel):
 class ExecutionRequest(BaseModel):
     code: str = Field(max_length=100000)
     language: str = Field(default="python", pattern="^python$")
-    dependencies: Optional[List[str]] = Field(default_factory=list)
-    execution_options: ExecutionOptions = Field(default_factory=ExecutionOptions)
-    session_id: Optional[str] = None
+    session_id: str
 
     @field_validator("code")
     @classmethod

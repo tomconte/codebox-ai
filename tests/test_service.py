@@ -35,7 +35,7 @@ async def test_create_session_dependency_error(mock_kernel_manager):
 async def test_create_execution_request_creates_session(mock_kernel_manager):
     service = CodeExecutionService()
     service.create_session = AsyncMock(return_value="sid1")
-    req = ExecutionRequest(code="print('hi')", dependencies=["pytest"], execution_options=ExecutionOptions())
+    req = ExecutionRequest(code="print('hi')", session_id="sid1")
     request_id = await service.create_execution_request(req)
     assert request_id in service.requests
     assert service.requests[request_id]["session_id"] == "sid1"
