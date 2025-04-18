@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import tempfile
 import time
 from typing import Any, Dict, List, Optional
 
@@ -17,10 +18,13 @@ client = AzureOpenAI()
 # CodeBox-AI API configuration
 CODEBOX_URL = "http://localhost:8000"
 
-# You can change this to any local path you want to mount
-# For example, /Users/yourusername/data, etc.
-LOCAL_MOUNT_PATH = "/tmp"
-CONTAINER_MOUNT_PATH = "/data"
+# Default mount paths
+DEFAULT_LOCAL_MOUNT_PATH = tempfile.gettempdir()
+DEFAULT_CONTAINER_MOUNT_PATH = "/data"
+
+# Allow overriding mount path with environment variable
+LOCAL_MOUNT_PATH = os.environ.get("CODEBOX_MOUNT_PATH", DEFAULT_LOCAL_MOUNT_PATH)
+CONTAINER_MOUNT_PATH = os.environ.get("CODEBOX_MOUNT_PATH", DEFAULT_CONTAINER_MOUNT_PATH)
 
 
 class CodeBoxSession:

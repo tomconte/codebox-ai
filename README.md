@@ -45,13 +45,13 @@ You can run the MCP server in several ways:
 
 - **Combined FastAPI + MCP server:**
   ```bash
-  python run.py
+  uv run run.py
   ```
   This starts both the FastAPI API and the MCP server (MCP available at `/mcp`).
 
 - **MCP server only:**
   ```bash
-  python run.py --mode mcp
+  uv run run.py --mode mcp
   ```
 
 ### MCP Features
@@ -152,6 +152,44 @@ export DOCKER_HOST="unix:///Users/tconte/.docker/run/docker.sock"
 
 ## Usage
 
+### Example: OpenAI GPT Integration
+
+1. Create a `.env` file in the project root:
+
+```
+AZURE_OPENAI_ENDPOINT=https://xxx.cognitiveservices.azure.com/
+AZURE_OPENAI_API_KEY=foo
+AZURE_OPENAI_DEPLOYMENT=gpt-4o
+OPENAI_API_VERSION=2024-05-01-preview
+```
+
+2. Install additional requirements:
+
+```bash
+uv sync --extra "examples"
+```
+
+3. Run the example:
+
+```bash
+uv run examples/example_openai.py
+```
+
+This will start an interactive session where you can chat with GPT-4 and have it
+execute Python code. The script maintains state between executions, so variables
+and imports persist across interactions.
+
+If you want to expose a local directory to the container, you can do so by using
+the `CODEBOX_MOUNT_PATH` environment variable. For example, to mount your
+`Downloads` directory:
+
+```bash
+export CODEBOX_MOUNT_PATH=/Users/username/Downloads
+uv run examples/example_openai.py
+```
+
+![Demo screencast](docs/images/readme_screencast.gif)
+
 ### Direct API Usage
 
 1. Create a new session:
@@ -227,33 +265,6 @@ curl -X POST http://localhost:8000/execute \
     "session_id": "YOUR_SESSION_ID"
   }'
 ```
-
-### OpenAI GPT Integration Example
-
-1. Create a `.env` file in the project root:
-
-```
-AZURE_OPENAI_ENDPOINT=https://xxx.cognitiveservices.azure.com/
-AZURE_OPENAI_API_KEY=foo
-AZURE_OPENAI_DEPLOYMENT=gpt-4o
-OPENAI_API_VERSION=2024-05-01-preview
-```
-
-2. Install additional requirements:
-
-```bash
-uv sync --extra "examples"
-```
-
-3. Run the example:
-
-```bash
-uv run examples/example_openai.py
-```
-
-This will start an interactive session where you can chat with GPT-4 and have it execute Python code. The script maintains state between executions, so variables and imports persist across interactions.
-
-![Demo screencast](docs/images/readme_screencast.gif)
 
 ## API Endpoints
 

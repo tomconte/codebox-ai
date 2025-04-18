@@ -57,9 +57,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Set the Docker host environment variable if needed (for MacOS)
+    # Set Docker host environment for MacOS if needed
     if sys.platform == "darwin" and "DOCKER_HOST" not in os.environ:
-        os.environ["DOCKER_HOST"] = "unix:///var/run/docker.sock"
+        docker_path = "/var/run/docker.sock"
+        user_name = os.getenv("USER")
+        if os.path.exists(f"/Users/{user_name}/.docker/run/docker.sock"):
+            docker_path = f"/Users/{user_name}/.docker/run/docker.sock"
+        os.environ["DOCKER_HOST"] = f"unix://{docker_path}"
 
     if args.mode == "fastapi":
         run_fastapi(args.host, args.port)
