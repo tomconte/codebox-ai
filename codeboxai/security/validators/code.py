@@ -91,6 +91,31 @@ def ast_rule(f: Callable) -> Callable:
     return wrapper
 
 
+def create_validator_with_disabled_rules(disabled_rules: Optional[List[str]] = None) -> "CodeValidator":
+    """
+    Factory function to create a new CodeValidator with specific rules disabled
+
+    Args:
+        disabled_rules: List of rule names to disable, or ["all"] to disable all validation
+
+    Returns:
+        A configured CodeValidator instance
+    """
+    validator = CodeValidator()
+
+    if disabled_rules:
+        if "all" in disabled_rules:
+            # Disable all rules
+            for rule in validator.rules:
+                validator.disable_rule(rule.name)
+        else:
+            # Disable specific rules
+            for rule_name in disabled_rules:
+                validator.disable_rule(rule_name)
+
+    return validator
+
+
 class CodeValidator:
     """Validates Python code for security concerns while allowing Jupyter/IPython syntax"""
 
@@ -197,11 +222,15 @@ class CodeValidator:
         """Enable a specific validation rule"""
         if rule_name in self.rules_lookup:
             self.rules_lookup[rule_name].enabled = True
+            logger.debug(f"Enabled validation rule: {rule_name}")
 
     def disable_rule(self, rule_name: str):
         """Disable a specific validation rule"""
         if rule_name in self.rules_lookup:
             self.rules_lookup[rule_name].enabled = False
+            logger.debug(f"Disabled validation rule: {rule_name}")
+        else:
+            logger.warning(f"Attempted to disable unknown validation rule: {rule_name}")
 
     def _validate_package_installation(self, code: str) -> Tuple[bool, Optional[str]]:
         """Validates package installation commands"""

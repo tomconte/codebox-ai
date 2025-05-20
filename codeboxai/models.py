@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
-from codeboxai.security.validators.code import CodeValidator
+from codeboxai.security.validators.code import create_validator_with_disabled_rules
 
 
 class MountPoint(BaseModel):
@@ -54,14 +54,26 @@ class ExecutionOptions(BaseModel):
 
 
 class ExecutionRequest(BaseModel):
+    disable_validation: Optional[List[str]] = Field(
+        default=None, description="Rules to disable, or ['all'] to disable all"
+    )
     code: str = Field(max_length=100000)
     language: str = Field(default="python", pattern="^python$")
     session_id: str
 
     @field_validator("code")
     @classmethod
-    def validate_code(cls, code: str) -> str:
-        validator = CodeValidator()
+    def validate_code(cls, code: str, info: ValidationInfo) -> str:
+        # Get the disable_validation value from the validation context
+        values = info.data
+        disabled_rules = values.get("disable_validation")
+
+        if disabled_rules and "all" in disabled_rules:
+            # Skip validation completely if "all" is specified
+            return code
+
+        # Create validator with disabled rules
+        validator = create_validator_with_disabled_rules(disabled_rules)
         is_valid, message = validator.validate_code(code)
         if not is_valid:
             raise ValueError(message)

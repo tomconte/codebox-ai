@@ -20,13 +20,20 @@ logger = logging.getLogger(__name__)
 class MCPCodeService:
     """MCP interface to CodeBox-AI execution service"""
 
-    def __init__(self, mount_dirs: Optional[List[str]] = None):
+    def __init__(self, mount_dirs: Optional[List[str]] = None, disabled_validators: Optional[List[str]] = None):
         self.code_service = CodeExecutionService()
         self.active_sessions: Dict[str, Dict[str, Any]] = {}
         self.mount_dirs = mount_dirs or []
+        self.disabled_validators = disabled_validators or []
 
         if self.mount_dirs:
             logger.info(f"Configured server with {len(self.mount_dirs)} mounted directories: {self.mount_dirs}")
+
+        if self.disabled_validators:
+            if "all" in self.disabled_validators:
+                logger.info("All code validators have been disabled")
+            else:
+                logger.info(f"Disabled validators: {', '.join(self.disabled_validators)}")
 
     async def _wait_for_execution(self, request_id: str, timeout: int = 60) -> Dict[str, Any]:
         """Wait for code execution to complete and return results"""
@@ -60,17 +67,20 @@ async def codebox_lifespan(server: FastMCP) -> AsyncIterator[None]:
     logger.info("Shutting down CodeBox-AI MCP server")
 
 
-def create_mcp_server(name: str = "CodeBox-AI", mount_dirs: Optional[List[str]] = None) -> FastMCP:
+def create_mcp_server(
+    name: str = "CodeBox-AI", mount_dirs: Optional[List[str]] = None, disabled_validators: Optional[List[str]] = None
+) -> FastMCP:
     """Create and configure the MCP server
 
     Args:
         name: Name of the MCP server
         mount_dirs: List of directories to mount in the execution environment
+        disabled_validators: List of validation rules to disable or ["all"] to disable all
 
     Returns:
         Configured FastMCP server instance
     """
-    mcp_service = MCPCodeService(mount_dirs)
+    mcp_service = MCPCodeService(mount_dirs, disabled_validators)
     mcp = FastMCP(name, lifespan=codebox_lifespan)
 
     @mcp.tool()
@@ -102,8 +112,10 @@ def create_mcp_server(name: str = "CodeBox-AI", mount_dirs: Optional[List[str]] 
                     dependencies=dependencies or [], execution_options=execution_options
                 )
 
-            # Create a new execution request
-            exec_request = ExecutionRequest(session_id=session_id, code=code)
+            # Create a new execution request with disabled validators if specified
+            exec_request = ExecutionRequest(
+                session_id=session_id, code=code, disable_validation=mcp_service.disabled_validators
+            )
             request_id = await mcp_service.code_service.create_execution_request(exec_request)
 
             # Execute the code
